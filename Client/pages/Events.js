@@ -6,7 +6,7 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import { Feather as Icon } from '@expo/vector-icons';
 
 const EventCard = memo(({ event, theme, t }) => {
   return (

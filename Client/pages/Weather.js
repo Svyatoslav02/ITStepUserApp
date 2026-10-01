@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import { Feather as Icon } from '@expo/vector-icons';
 
 const WeatherWidget = ({ theme, t, selectedCity }) => {
   const [weatherData, setWeatherData] = useState(null);

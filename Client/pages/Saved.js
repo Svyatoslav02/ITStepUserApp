@@ -10,8 +10,7 @@ import {
   StatusBar,
   Animated,
 } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Icon from 'react-native-vector-icons/Feather';
+import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 
 const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBackPress }) => {
   const [placesFilter, setPlacesFilter] = useState('food');

@@ -8,8 +8,7 @@ import {
   Image,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Icon from 'react-native-vector-icons/Feather';
-
+import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 const PlaceCard = memo(({ place, liked, toggleLike, theme }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>

@@ -10,7 +10,7 @@ import {
   Image,
   Animated,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import { Feather as Icon } from '@expo/vector-icons';
 import cityData from './Data';
 import Saved from './Saved';
 import PlacesWidget from './Places';

@@ -10,7 +10,7 @@ import {
   Image,
   Pressable,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import { Feather as Icon } from '@expo/vector-icons';
 
 const Donate = ({ isVisible, onClose, theme, language }) => {
   const t = {

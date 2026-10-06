@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 
-const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBackPress }) => {
+const Saved = ({ likedPlaces, placesData, isDarkMode, toggleLike, onBackPress }) => {
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 

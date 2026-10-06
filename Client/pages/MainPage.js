@@ -19,7 +19,7 @@ import EventsWidget from './Events';
 import Donate from './Donate';
 import WeatherWidget from './Weather';
 
-const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage, setIsDarkMode }) => {
+const MainPage = ({ selectedCity, onBackPress, isDarkMode, setIsDarkMode }) => {
   const [activeTab, setActiveTab] = useState('history');
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
@@ -215,7 +215,6 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
       <Saved
         likedPlaces={likedPlaces}
         placesData={data.places}
-        language={language}
         isDarkMode={isDarkMode}
         toggleLike={toggleLike}
         onBackPress={() => setShowFavorites(false)}
@@ -234,11 +233,6 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
           {selectedCity}
         </Text>
         <View style={s.controls}>
-          <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
-            <Text style={[s.lang, { color: theme.bannerText }]}>
-              {language === 'uk' ? 'EN' : 'UKR'}
-            </Text>
-          </TouchableOpacity>
           <TouchableOpacity onPress={handleSupport}>
             <Icon name="gift" size={24} color={theme.bannerText} style={{ marginRight: 12 }} />
           </TouchableOpacity>
@@ -299,7 +293,6 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
         isVisible={isDonateVisible}
         onClose={handleCloseDonate}
         theme={theme}
-        language={language}
       />
     </SafeAreaView>
   );
@@ -322,7 +315,6 @@ const s = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: '700', letterSpacing: 0.6, marginLeft: 8 },
   controls: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
-  lang: { fontSize: 16, fontWeight: '600', letterSpacing: 0.5, marginRight: 16 },
   iconBtn: { padding: 8 },
   favBtnContainer: { marginVertical: 8, paddingHorizontal: 16, alignItems: 'center' },
   favBtn: {

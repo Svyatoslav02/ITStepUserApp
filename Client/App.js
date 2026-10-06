@@ -18,7 +18,6 @@ import Donate from './pages/Donate.js';
 const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState('uk');
   const [currentScreen, setCurrentScreen] = useState('citySelect');
   const [selectedCity, setSelectedCity] = useState('Івано-Франківськ');
   const [isDonateModalVisible, setIsDonateModalVisible] = useState(false);
@@ -104,9 +103,7 @@ const App = () => {
       <MainPage
         selectedCity={selectedCity}
         onBackPress={() => setCurrentScreen('citySelect')}
-        language={language}
         isDarkMode={isDarkMode}
-        setLanguage={setLanguage}
         setIsDarkMode={setIsDarkMode}
       />
     );
@@ -119,21 +116,6 @@ const App = () => {
         <View style={[styles.header, { backgroundColor: theme.banner, shadowColor: theme.shadow }]}>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.selectCity}</Text>
           <View style={styles.controls}>
-            <TouchableOpacity
-              onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}
-              style={[
-                styles.lang,
-                {
-                  borderColor: isDarkMode ? theme.accent : '#bbb',
-                  backgroundColor: isDarkMode ? '#1f1f1f' : 'transparent',
-                },
-              ]}
-            >
-              <Text style={{ color: theme.bannerText, fontWeight: '700' }}>
-                {language === 'uk' ? 'EN' : 'UKR'}
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity onPress={handleSupport} style={styles.donateBtn}>
               <Icon name="gift" size={24} color={theme.bannerText} />
             </TouchableOpacity>
@@ -189,7 +171,6 @@ const App = () => {
           isVisible={isDonateModalVisible}
           onClose={() => setIsDonateModalVisible(false)}
           theme={theme}
-          language={language}
         />
       </SafeAreaView>
     </Animated.View>
@@ -262,18 +243,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 'auto',
-  },
-  lang: {
-    fontSize: 16,
-    letterSpacing: 0.5,
-    marginRight: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   donateBtn: {
     flexDirection: 'row',

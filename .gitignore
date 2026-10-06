@@ -1,12 +1,18 @@
 # Dependencies
 node_modules/
+**/node_modules/
 
 # Expo / React Native
 .expo/
+**/.expo/
 dist/
 web-build/
 expo-env.d.ts
 .metro-health-check*
+
+# Build output
+build/
+coverage/
 
 # Logs
 npm-debug.log*

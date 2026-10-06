@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,18 +6,53 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  ScrollView,
-  Image,
   Animated,
 } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
 import cityData from './Data';
 import Saved from './Saved';
-import PlacesWidget from './Places';
-import AccommodationWidget from './AccommodationWidget';
-import EventsWidget from './Events';
+import MainTabs from './components/MainTabs';
+import HistoryScreen from './screens/HistoryScreen';
+import PlacesScreen from './screens/PlacesScreen';
+import AccommodationScreen from './screens/AccommodationScreen';
+import EventsScreen from './screens/EventsScreen';
 import Donate from './Donate';
 import WeatherWidget from './Weather';
+
+const DARK_THEME = {
+  bg: '#121212',
+  card: '#1f1f1f',
+  text: '#e5e5e5',
+  text2: '#aaaaaa',
+  accent: '#FFD700',
+  banner: '#1f1f1f',
+  bannerText: '#FFD700',
+  inactiveHeart: '#1f1f1f',
+  favBtnBg: '#FFD700',
+  favBtnText: '#000000',
+};
+
+const LIGHT_THEME = {
+  bg: '#f0f4f8',
+  card: '#ffffff',
+  text: '#1f2937',
+  text2: '#4b5563',
+  accent: 'rgb(67, 80, 105)',
+  banner: '#1f2937',
+  bannerText: '#ffffff',
+  inactiveHeart: '#1f2937',
+  favBtnBg: '#1f2937',
+  favBtnText: '#ffffff',
+};
+
+const TabScene = ({ isActive, children }) => (
+  <View
+    style={[s.scene, !isActive && s.hiddenScene]}
+    pointerEvents={isActive ? 'auto' : 'none'}
+  >
+    {children}
+  </View>
+);
 
 const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage, setIsDarkMode }) => {
   const [activeTab, setActiveTab] = useState('history');
@@ -48,7 +83,7 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
     ]).start();
   }, [activeTab]);
 
-  const t = {
+  const t = useMemo(() => ({
     history: 'Історія',
     places: 'Місця',
     accommodation: 'Ночівля',
@@ -67,148 +102,43 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
     nature: 'Природа',
     shopping: 'Шопінг',
     entertainment: 'Розваги',
+    concert: 'Концерти',
     unavailable: 'недоступна',
     placesUnavailable: 'Місця недоступні',
     rating: 'Рейтинг',
     address: 'Адреса',
     description: 'Опис',
-  };
+  }), [selectedCity]);
 
-  const darkTheme = {
-    bg: '#121212',
-    card: '#1f1f1f',
-    text: '#e5e5e5',
-    text2: '#aaaaaa',
-    accent: '#FFD700',
-    banner: '#1f1f1f',
-    bannerText: '#FFD700',
-    inactiveHeart: '#1f1f1f',
-    favBtnBg: '#FFD700',
-    favBtnText: '#000000',
-  };
+  const theme = isDarkMode ? DARK_THEME : LIGHT_THEME;
 
-  const lightTheme = {
-    bg: '#f0f4f8',
-    card: '#ffffff',
-    text: '#1f2937',
-    text2: '#4b5563',
-    accent: 'rgb(67, 80, 105)',
-    banner: '#1f2937',
-    bannerText: '#ffffff',
-    inactiveHeart: '#1f2937',
-    favBtnBg: '#1f2937',
-    favBtnText: '#ffffff',
-  };
-
-  const theme = isDarkMode ? darkTheme : lightTheme;
-
-  const data = {
+  const data = useMemo(() => ({
     weather: cityData[selectedCity]?.weather.uk,
     places: cityData[selectedCity]?.places.uk,
     history: cityData[selectedCity]?.history.uk,
     accommodation: cityData[selectedCity]?.accommodation.uk,
     events: cityData[selectedCity]?.events.uk,
-  };
+  }), [selectedCity]);
 
-  const handleSupport = () => {
+  const handleSupport = useCallback(() => {
     setIsDonateVisible(true);
-  };
+  }, []);
 
-  const handleCloseDonate = () => {
+  const handleCloseDonate = useCallback(() => {
     setIsDonateVisible(false);
-  };
+  }, []);
 
-  const toggleLike = (id) => {
+  const handleTabPress = useCallback((tabId) => {
+    setActiveTab(tabId);
+  }, []);
+
+  const toggleLike = useCallback((id) => {
     setLikedPlaces((prev) => {
       const newSet = new Set(prev);
       newSet.has(id) ? newSet.delete(id) : newSet.add(id);
       return newSet;
     });
-  };
-
-  const GenericWidget = ({ dataKey, title }) => {
-    const items = data[dataKey] || [];
-    if (!items || items.length === 0) {
-      return (
-        <View style={[s.card, { backgroundColor: theme.card }]}>
-          <Text style={[s.title, { color: theme.text }]}>{t[title]} {t.unavailable}</Text>
-        </View>
-      );
-    }
-    if (dataKey === 'history') {
-      return (
-        <ScrollView contentContainerStyle={{ paddingBottom: 20, paddingHorizontal: 18 }} showsVerticalScrollIndicator={false}>
-          {items.map((item, i) => (
-            <View key={i} style={[s.historyCard, { backgroundColor: theme.card }]}>
-              {item.image && <Image source={{ uri: item.image }} style={s.historyImage} />}
-              <Text style={[s.historyTitle, { color: theme.text }]}>{item.title}</Text>
-              {item.text.split('\n').map((para, idx) => (
-                <Text key={idx} style={[s.historyText, { color: theme.text2 }]}>{para.trim()}</Text>
-              ))}
-            </View>
-          ))}
-        </ScrollView>
-      );
-    }
-    return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-        {items.map((item, i) => (
-          <View key={i} style={[s.card, { backgroundColor: theme.card }]}>
-            {item.image && <Image source={{ uri: item.image }} style={s.image} />}
-            <View style={s.content}>
-              <Text style={[s.itemTitle, { color: theme.text }]}>{item.title}</Text>
-              <Text style={[s.itemText, { color: theme.text2 }]}>{item.text}</Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
-    );
-  };
-
-  const tabs = [
-    { id: 'history', icon: 'clock', widget: <GenericWidget dataKey="history" title="history" /> },
-    {
-      id: 'places',
-      icon: 'map',
-      widget: (
-        <PlacesWidget
-          data={data}
-          theme={theme}
-          t={t}
-          likedPlaces={likedPlaces}
-          toggleLike={toggleLike}
-          placesFilter={placesFilter}
-          setPlacesFilter={setPlacesFilter}
-        />
-      ),
-    },
-    {
-      id: 'accommodation',
-      icon: 'moon',
-      widget: (
-        <AccommodationWidget
-          data={data}
-          theme={theme}
-          t={t}
-          accommodationFilter={accommodationFilter}
-          setAccommodationFilter={setAccommodationFilter}
-        />
-      ),
-    },
-    {
-      id: 'events',
-      icon: 'calendar',
-      widget: (
-        <EventsWidget
-          data={data}
-          theme={theme}
-          t={t}
-          eventsFilter={eventsFilter}
-          setEventsFilter={setEventsFilter}
-        />
-      ),
-    },
-  ];
+  }, []);
 
   if (showFavorites) {
     return (
@@ -261,38 +191,47 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
         </TouchableOpacity>
       </View>
 
-      <View style={s.tabContainer}>
-        <View style={s.tabWrapper}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              onPress={() => setActiveTab(tab.id)}
-              style={[s.tab, { backgroundColor: activeTab === tab.id ? theme.accent : theme.card }]}
-            >
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={[
-                  s.tabText,
-                  {
-                    color:
-                      activeTab === tab.id
-                        ? isDarkMode
-                          ? '#000'
-                          : '#fff'
-                        : theme.text2,
-                  },
-                ]}
-              >
-                {t[tab.id]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <MainTabs
+        activeTab={activeTab}
+        onTabPress={handleTabPress}
+        t={t}
+        theme={theme}
+        isDarkMode={isDarkMode}
+      />
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {tabs.find((tab) => tab.id === activeTab)?.widget}
+        <TabScene isActive={activeTab === 'history'}>
+          <HistoryScreen items={data.history} theme={theme} t={t} />
+        </TabScene>
+        <TabScene isActive={activeTab === 'places'}>
+          <PlacesScreen
+            places={data.places}
+            theme={theme}
+            t={t}
+            likedPlaces={likedPlaces}
+            onToggleLike={toggleLike}
+            selectedFilter={placesFilter}
+            onFilterChange={setPlacesFilter}
+          />
+        </TabScene>
+        <TabScene isActive={activeTab === 'accommodation'}>
+          <AccommodationScreen
+            accommodation={data.accommodation}
+            theme={theme}
+            t={t}
+            selectedFilter={accommodationFilter}
+            onFilterChange={setAccommodationFilter}
+          />
+        </TabScene>
+        <TabScene isActive={activeTab === 'events'}>
+          <EventsScreen
+            events={data.events}
+            theme={theme}
+            t={t}
+            selectedFilter={eventsFilter}
+            onFilterChange={setEventsFilter}
+          />
+        </TabScene>
       </Animated.View>
 
       <Donate
@@ -307,6 +246,8 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
 
 const s = StyleSheet.create({
   container: { flex: 1 },
+  scene: { flex: 1 },
+  hiddenScene: { display: 'none' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -338,51 +279,6 @@ const s = StyleSheet.create({
     elevation: 10,
   },
   favBtnText: { fontSize: 17, fontWeight: 'bold' },
-  tabContainer: { paddingHorizontal: 16, paddingVertical: 8 },
-  tabWrapper: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginHorizontal: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 5,
-  },
-  tabText: { fontSize: 15, marginLeft: 6, fontWeight: '700' },
-  card: {
-    padding: 18,
-    borderRadius: 12,
-    marginHorizontal: 18,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 7,
-    elevation: 7,
-  },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 14 },
-  image: { width: '100%', height: 200, borderRadius: 14, marginBottom: 14 },
-  content: { paddingHorizontal: 6 },
-  itemTitle: { fontSize: 17, fontWeight: '700', marginBottom: 8 },
-  itemText: { fontSize: 15, fontWeight: '500' },
-  historyCard: {
-    padding: 20,
-    borderRadius: 14,
-    marginVertical: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 6,
-  },
-  historyTitle: { fontSize: 22, fontWeight: '800', marginBottom: 12, letterSpacing: 0.5 },
-  historyText: { fontSize: 16, fontWeight: '500', lineHeight: 24, marginBottom: 10 },
-  historyImage: { width: '100%', height: 240, borderRadius: 16, marginBottom: 16, resizeMode: 'cover' },
 });
 
 export default MainPage;

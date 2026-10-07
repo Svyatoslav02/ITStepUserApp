@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
-import cityData from './Data';
+import useCityData from '../services/useCityData';
 
 const Saved = ({ navigation, route }) => {
   const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
   const city = route.params?.city || 'Івано-Франківськ';
-  const placesData = cityData[city]?.places?.[language] || cityData[city]?.places?.uk || [];
+  const { data, categories, isLoading, error } = useCityData(city, language);
+  const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 
@@ -44,14 +45,6 @@ const Saved = ({ navigation, route }) => {
       return next;
     });
   };
-
-  const filters = [
-    { id: 'food', icon: 'silverware-fork-knife' },
-    { id: 'culture', icon: 'drama-masks' },
-    { id: 'nature', icon: 'tree' },
-    { id: 'shopping', icon: 'shopping' },
-    { id: 'entertainment', icon: 'movie-open' },
-  ];
 
   const filteredFavorites = useMemo(
     () =>
@@ -90,7 +83,7 @@ const Saved = ({ navigation, route }) => {
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (!placesData || placesData.length === 0) {
+  if (isLoading || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -101,7 +94,9 @@ const Saved = ({ navigation, route }) => {
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
         </View>
         <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
+          <Text style={[styles.emptyText, { color: theme.text2 }]}>
+            {isLoading ? 'Завантаження…' : error ? 'Не вдалося завантажити місця.' : t.placesUnavailable}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -134,7 +129,7 @@ const Saved = ({ navigation, route }) => {
           <Text style={[styles.title, { color: theme.text }]}>{t.places}</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-            {filters.map((f) => (
+            {categories.map((f) => (
               <TouchableOpacity
                 key={f.id}
                 onPress={() => setPlacesFilter(f.id)}
@@ -189,7 +184,7 @@ const Saved = ({ navigation, route }) => {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.content}>
-                  <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { place: item, city })} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { placeId: item.id, city })} activeOpacity={0.7}>
                     <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
                       {item.name}
                     </Text>

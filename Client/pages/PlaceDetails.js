@@ -2,10 +2,25 @@ import React, { useContext } from 'react';
 import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
+import usePlace from '../services/usePlace';
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, theme } = useContext(AppContext);
-  const { place, city } = route.params;
+  const { isDarkMode, language, theme } = useContext(AppContext);
+  const { city, placeId } = route.params;
+  const { place, isLoading, error } = usePlace(city, placeId, language);
+
+  if (isLoading || !place) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Назад">
+          <Icon name="chevron-left" size={24} color={theme.bannerText} />
+        </TouchableOpacity>
+        <Text style={[styles.body, { color: theme.text2 }]}>
+          {isLoading ? 'Завантаження місця…' : error ? 'Не вдалося завантажити місце.' : 'Місце не знайдено.'}
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -41,6 +56,7 @@ export default function PlaceDetails({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loading: { justifyContent: 'center', alignItems: 'center', padding: 24 },
   header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, margin: 12, borderRadius: 12, elevation: 5 },
   backButton: { padding: 6 },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', marginLeft: 4 },

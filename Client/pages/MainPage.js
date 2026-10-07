@@ -12,7 +12,7 @@ import {
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
-import cityData from './Data';
+import useCityData from '../services/useCityData';
 import PlacesWidget from './Places';
 import AccommodationWidget from './AccommodationWidget';
 import EventsWidget from './Events';
@@ -48,14 +48,7 @@ export default function MainPage({ navigation, route }) {
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
-
-  const data = {
-    weather: cityData[selectedCity]?.weather?.[language] || cityData[selectedCity]?.weather?.uk,
-    places: cityData[selectedCity]?.places?.[language] || cityData[selectedCity]?.places?.uk || [],
-    history: cityData[selectedCity]?.history?.[language] || cityData[selectedCity]?.history?.uk || [],
-    accommodation: cityData[selectedCity]?.accommodation?.[language] || cityData[selectedCity]?.accommodation?.uk || [],
-    events: cityData[selectedCity]?.events?.[language] || cityData[selectedCity]?.events?.uk || [],
-  };
+  const { data, categories, isLoading, error } = useCityData(selectedCity, language);
   const t = {
     history: language === 'uk' ? 'Історія' : 'History',
     places: language === 'uk' ? 'Місця' : 'Places',
@@ -86,7 +79,15 @@ export default function MainPage({ navigation, route }) {
       return next;
     });
   };
-  const openPlaceDetails = (place) => navigation.navigate('PlaceDetails', { place, city: selectedCity });
+  const openPlaceDetails = (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity });
+
+  if (isLoading || !data) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
+        <Text style={{ color: theme.text2 }}>{error ? 'Не вдалося завантажити дані міста.' : 'Завантаження даних міста…'}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -149,6 +150,7 @@ export default function MainPage({ navigation, route }) {
               placesFilter={placesFilter}
               setPlacesFilter={setPlacesFilter}
               onPlacePress={openPlaceDetails}
+              categories={categories}
             />
           )}
         </Tab.Screen>

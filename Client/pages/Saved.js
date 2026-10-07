@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,13 @@ import {
   Animated,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
+import AppContext from '../AppContext';
+import cityData from './Data';
 
-const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBackPress }) => {
+const Saved = ({ navigation, route }) => {
+  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
+  const city = route.params?.city || 'Івано-Франківськ';
+  const placesData = cityData[city]?.places?.[language] || cityData[city]?.places?.uk || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 
@@ -32,29 +37,13 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
     sport: 'Спорт',
   };
 
-  const darkTheme = {
-    background: '#121212',
-    card: '#1f1f1f',
-    text: '#e5e5e5',
-    text2: '#aaaaaa',
-    accent: '#FFD700',
-    bannerBackground: '#1f1f1f',
-    bannerText: '#FFD700',
-    inactiveHeart: '#1f1f1f',
+  const toggleLike = (id) => {
+    setLikedPlaces((current) => {
+      const next = new Set(current);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
-
-  const lightTheme = {
-    background: '#f0f4f8',
-    card: '#ffffff',
-    text: '#1f2937',
-    text2: '#4b5563',
-    accent: 'rgb(67, 80, 105)',
-    bannerBackground: '#1f2937',
-    bannerText: '#ffffff',
-    inactiveHeart: '#1f2937',
-  };
-
-  const theme = isDarkMode ? darkTheme : lightTheme;
 
   const filters = [
     { id: 'food', icon: 'silverware-fork-knife' },
@@ -106,7 +95,7 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
-          <TouchableOpacity onPress={onBackPress} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
@@ -122,7 +111,7 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
-        <TouchableOpacity onPress={onBackPress} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
@@ -200,9 +189,11 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
                   </TouchableOpacity>
                 </View>
                 <View style={styles.content}>
-                  <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-                    {item.name}
-                  </Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { place: item, city })} activeOpacity={0.7}>
+                    <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
                   {item.description && (
                     <Text style={[styles.desc, { color: theme.text2 }]}>{item.description}</Text>
                   )}

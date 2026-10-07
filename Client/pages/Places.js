@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
-const PlaceCard = memo(({ place, liked, toggleLike, theme }) => {
+const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
@@ -55,9 +55,11 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme }) => {
       </View>
 
       <View style={s.content}>
-        <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-          {place.name}
-        </Text>
+        <TouchableOpacity onPress={() => onPlacePress?.(place)} activeOpacity={0.7}>
+          <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+            {place.name}
+          </Text>
+        </TouchableOpacity>
         {place.description && <Text style={[s.desc, { color: theme.text2 }]}>{place.description}</Text>}
         <View style={s.row}>
           <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
@@ -74,7 +76,7 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme }) => {
   );
 });
 
-const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter }) => {
+const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress }) => {
   const filters = [
     { id: 'food', icon: 'silverware-fork-knife' },
     { id: 'culture', icon: 'drama-masks' },
@@ -123,6 +125,7 @@ const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilt
             liked={likedPlaces.has(p.id)}
             toggleLike={toggleLike}
             theme={theme}
+            onPlacePress={onPlacePress}
           />
         ))
       )}

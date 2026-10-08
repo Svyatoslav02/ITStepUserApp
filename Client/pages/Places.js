@@ -76,15 +76,7 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
   );
 });
 
-const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress }) => {
-  const filters = [
-    { id: 'food', icon: 'silverware-fork-knife' },
-    { id: 'culture', icon: 'drama-masks' },
-    { id: 'nature', icon: 'tree' },
-    { id: 'shopping', icon: 'shopping' },
-    { id: 'entertainment', icon: 'movie-open' },
-  ];
-
+const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories }) => {
   const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
 
   return (
@@ -92,7 +84,7 @@ const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilt
       <View style={[s.card, { backgroundColor: theme.card }]}>
         <Text style={[s.title, { color: theme.text }]}>{t.places}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filters}>
-          {filters.map((f) => (
+          {categories.map((f) => (
             <TouchableOpacity
               key={f.id}
               onPress={() => setPlacesFilter(f.id)}

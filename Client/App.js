@@ -18,11 +18,10 @@ import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
 import Donate from './pages/Donate';
-
 import AppContext from './AppContext';
+import useCities from './services/useCities';
 
 const Stack = createStackNavigator();
-const cities = ['Івано-Франківськ', 'Львів', 'Київ'];
 
 const makeTheme = (isDarkMode) => ({
   bg: isDarkMode ? '#121212' : '#f0f4f8',
@@ -44,6 +43,7 @@ function CitySelectScreen({ navigation }) {
   const { language, setLanguage, isDarkMode, setIsDarkMode, theme } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
+  const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
@@ -94,6 +94,11 @@ function CitySelectScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
+      {isCitiesLoading || citiesError ? (
+        <Text style={[styles.cityText, { color: theme.text2, textAlign: 'center' }]}>
+          {isCitiesLoading ? 'Завантаження міст…' : 'Не вдалося завантажити список міст.'}
+        </Text>
+      ) : null}
 
       <Donate
         isVisible={isDonateVisible}

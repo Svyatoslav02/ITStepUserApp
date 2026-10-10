@@ -360,7 +360,7 @@ const cityData = {
         }
       ]
     },
-    accommodation: {
+    hotels: {
       uk: [
         // Готель (Hotel)
         {
@@ -454,32 +454,6 @@ const cityData = {
           image: 'https://cf.bstatic.com/xdata/images/hotel/max1024x768/472358481.jpg?k=5b2293d3bcad177fe1fa1336c7299eada2f75a46bb56f6729778f7c1983a2acf&o=&hp=1',
           address: 'Вул. Шевченка, 25, Івано-Франківський, Івано-Франківська область, 76000',
           reviews: [{ rating: 4.3 }]
-        }
-      ]
-    },
-    events: {
-      uk: [
-        {
-          id: 'evt1',
-          title: 'Концерт Дзідзьо',
-          type: 'concert',
-          description: 'Запальний концерт популярного українського артиста Дзідзьо! Не пропустіть шанс насолодитися хітами та унікальною енергетикою.',
-          date: '25 червня 2025, 19:00',
-          image: 'https://i.ytimg.com/vi/qfHIVtNfDOA/maxresdefault.jpg',
-          address: 'Концертний зал "Арена Центр", вул. Незалежності, 55',
-          rating: 4.9,
-          reviews: [{ rating: 5.0 }]
-        },
-        {
-          id: 'evt2',
-          title: 'Концерт Шмальгаузен',
-          type: 'concert',
-          description: 'Неймовірний виступ гурту шмальгаузен із їхньою новою програмою. Чекайте на потужний звук і незабутню атмосферу!',
-          date: '1 липня 2023, 20:00',
-          image: 'https://static.wixstatic.com/media/45de3e_ae6e22bed59d41eeb555a6f8e7b01fcf~mv2.jpg/v1/fill/w_1000,h_646,al_c,q_85,usm_0.66_1.00_0.01/45de3e_ae6e22bed59d41eeb555a6f8e7b01fcf~mv2.jpg',
-          address: 'Палац культури "Народний дім", вул. Шевченка, 1',
-          rating: 4.7,
-          reviews: [{ rating: 4.8 }]
         }
       ]
     }

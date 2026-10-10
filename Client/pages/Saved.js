@@ -13,6 +13,7 @@ import {
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
+import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
 const Saved = ({ navigation, route }) => {
   const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
@@ -120,8 +121,8 @@ const Saved = ({ navigation, route }) => {
       >
         {/* Кнопка "Переглянути карту" */}
         <View style={styles.mapButtonContainer}>
-          <TouchableOpacity style={[styles.mapButton, { backgroundColor: theme.accent }]}>
-            <Text style={styles.mapButtonText}>Переглянути карту</Text>
+          <TouchableOpacity onPress={() => openPlaceInMaps({ name: city }, city)} style={[styles.mapButton, { backgroundColor: theme.accent }]} accessibilityRole="button">
+            <Text style={styles.mapButtonText}>Відкрити місто в Google Maps</Text>
           </TouchableOpacity>
         </View>
 
@@ -166,7 +167,7 @@ const Saved = ({ navigation, route }) => {
               <View style={[styles.card, { backgroundColor: theme.card }]}>
                 <View style={styles.imageContainer}>
                   {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
-                  <TouchableOpacity onPress={() => {}} style={styles.shareLeft} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
@@ -176,10 +177,10 @@ const Saved = ({ navigation, route }) => {
                       color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => {}} style={styles.distanceBlock} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
-                      <Text style={styles.distanceText}>200м від вас</Text>
+                      <Text style={styles.distanceText}>Google Maps</Text>
                     </View>
                   </TouchableOpacity>
                 </View>

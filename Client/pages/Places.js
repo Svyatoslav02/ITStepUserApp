@@ -8,7 +8,8 @@ import {
   Image,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
-const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
+import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
@@ -16,7 +17,9 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
 
         {/* Поділитися */}
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => sharePlace(place, city)}
+          accessibilityRole="button"
+          accessibilityLabel={`Поділитися місцем: ${place.name}`}
           style={s.shareLeft}
           activeOpacity={0.7}
         >
@@ -43,13 +46,15 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
 
         {/* Блок "200м від вас" */}
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => openPlaceInMaps(place, city)}
+          accessibilityRole="button"
+          accessibilityLabel={`Відкрити ${place.name} у Google Maps`}
           style={[s.distanceBlock, { backgroundColor:'#1f1f1f' }]}
           activeOpacity={0.7}
         >
           <View style={s.distanceContent}>
             <Icon name="navigation" size={18} color="#fbbf24" />
-            <Text style={s.distanceText}>200м від вас</Text>
+            <Text style={s.distanceText}>Google Maps</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -76,7 +81,7 @@ const PlaceCard = memo(({ place, liked, toggleLike, theme, onPlacePress }) => {
   );
 });
 
-const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories }) => {
+const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
   const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
 
   return (
@@ -114,6 +119,7 @@ const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilt
           <PlaceCard
             key={p.id}
             place={p}
+            city={city}
             liked={likedPlaces.has(p.id)}
             toggleLike={toggleLike}
             theme={theme}

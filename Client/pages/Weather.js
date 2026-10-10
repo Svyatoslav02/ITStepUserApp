@@ -6,9 +6,14 @@ const WeatherWidget = ({ theme, t, selectedCity }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [error, setError] = useState(null);
 
-  const API_KEY = 'c6435433aac50404804bb9341b3c3f5c';
+  const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
 
   const fetchWeather = async () => {
+    if (!API_KEY) {
+      setWeatherData(null);
+      setError(null);
+      return;
+    }
     try {
       const city = (selectedCity || 'Lviv').trim().replace(/\s+/g, '+');
       const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${city},UA&appid=${API_KEY}&units=metric&lang=uk`;

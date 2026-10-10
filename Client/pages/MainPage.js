@@ -14,9 +14,6 @@ import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import PlacesWidget from './Places';
-import AccommodationWidget from './AccommodationWidget';
-import EventsWidget from './Events';
-import Donate from './Donate';
 import WeatherWidget from './Weather';
 
 const Tab = createBottomTabNavigator();
@@ -45,15 +42,10 @@ export default function MainPage({ navigation, route }) {
   const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, theme } = useContext(AppContext);
   const selectedCity = route.params?.city || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
-  const [accommodationFilter, setAccommodationFilter] = useState('hotel');
-  const [eventsFilter, setEventsFilter] = useState('concert');
-  const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { data, categories, isLoading, error } = useCityData(selectedCity, language);
   const t = {
     history: language === 'uk' ? 'Історія' : 'History',
     places: language === 'uk' ? 'Місця' : 'Places',
-    accommodation: language === 'uk' ? 'Ночівля' : 'Stay',
-    events: language === 'uk' ? 'Події' : 'Events',
     favoritesButton: language === 'uk' ? 'Обрані місця' : 'Saved places',
     weather: language === 'uk' ? 'Погода' : 'Weather',
     currentWeather: language === 'uk' ? 'Поточна погода' : 'Current weather',
@@ -101,9 +93,6 @@ export default function MainPage({ navigation, route }) {
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
             <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsDonateVisible(true)}>
-            <Icon name="gift" size={24} color={theme.bannerText} style={{ marginRight: 12 }} />
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconButton}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
           </TouchableOpacity>
@@ -131,7 +120,7 @@ export default function MainPage({ navigation, route }) {
           tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.text2 },
           tabBarLabelStyle: { fontSize: 12, fontWeight: '700' },
           tabBarIcon: ({ color, size }) => {
-            const icons = { History: 'clock', Places: 'map', Accommodation: 'moon', Events: 'calendar' };
+            const icons = { History: 'clock', Places: 'map' };
             return <Icon name={icons[tabRoute.name]} size={size} color={color} />;
           },
         })}
@@ -154,36 +143,7 @@ export default function MainPage({ navigation, route }) {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Accommodation" options={{ title: t.accommodation }}>
-          {() => (
-            <AccommodationWidget
-              data={data}
-              theme={theme}
-              t={t}
-              accommodationFilter={accommodationFilter}
-              setAccommodationFilter={setAccommodationFilter}
-            />
-          )}
-        </Tab.Screen>
-        <Tab.Screen name="Events" options={{ title: t.events }}>
-          {() => (
-            <EventsWidget
-              data={data}
-              theme={theme}
-              t={t}
-              eventsFilter={eventsFilter}
-              setEventsFilter={setEventsFilter}
-            />
-          )}
-        </Tab.Screen>
       </Tab.Navigator>
-
-      <Donate
-        isVisible={isDonateVisible}
-        onClose={() => setIsDonateVisible(false)}
-        theme={theme}
-        language={language}
-      />
     </SafeAreaView>
   );
 }

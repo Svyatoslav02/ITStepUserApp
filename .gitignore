@@ -1,0 +1,10 @@
+# Dependencies and generated Expo output
+**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+
+# Local environment variables; keep only the documented template in Git
+**/.env
+**/.env.*
+!**/.env.example

@@ -150,6 +150,7 @@ export default function MainPage({ navigation, route }) {
               placesFilter={placesFilter}
               setPlacesFilter={setPlacesFilter}
               onPlacePress={openPlaceDetails}
+              city={selectedCity}
               categories={categories}
             />
           )}
@@ -162,6 +163,7 @@ export default function MainPage({ navigation, route }) {
               t={t}
               accommodationFilter={accommodationFilter}
               setAccommodationFilter={setAccommodationFilter}
+              city={selectedCity}
             />
           )}
         </Tab.Screen>

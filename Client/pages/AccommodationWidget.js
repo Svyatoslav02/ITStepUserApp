@@ -8,14 +8,17 @@ import {
   Image,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
+import { sharePlace } from '../utils/placeActions';
 
-const AccommodationCard = memo(({ accommodation, theme, t }) => {
+const AccommodationCard = memo(({ accommodation, city, theme, t }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
         {accommodation.image && <Image source={{ uri: accommodation.image }} style={s.image} />}
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => sharePlace(accommodation, city)}
+          accessibilityRole="button"
+          accessibilityLabel={`Поділитися місцем: ${accommodation.title}`}
           style={s.shareLeft}
           activeOpacity={0.7}
         >
@@ -46,7 +49,7 @@ const AccommodationCard = memo(({ accommodation, theme, t }) => {
   );
 });
 
-const AccommodationWidget = memo(({ data, theme, t, accommodationFilter, setAccommodationFilter }) => {
+const AccommodationWidget = memo(({ data, theme, t, accommodationFilter, setAccommodationFilter, city }) => {
   const filters = [
     { id: 'hotel', icon: 'office-building' },
     { id: 'motel', icon: 'caravan' },
@@ -89,6 +92,7 @@ const AccommodationWidget = memo(({ data, theme, t, accommodationFilter, setAcco
           <AccommodationCard
             key={a.id}
             accommodation={a}
+            city={city}
             theme={theme}
             t={t}
           />

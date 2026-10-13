@@ -13,13 +13,13 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
-        {place.image && <Image source={{ uri: place.image }} style={s.image} />}
+        {place.photos?.[0] ? <Image source={{ uri: place.photos[0] }} style={s.image} /> : null}
 
         {/* Поділитися */}
         <TouchableOpacity
           onPress={() => sharePlace(place, city)}
           accessibilityRole="button"
-          accessibilityLabel={`Поділитися місцем: ${place.name}`}
+          accessibilityLabel={`Поділитися місцем: ${place.name || 'Місце без назви'}`}
           style={s.shareLeft}
           activeOpacity={0.7}
         >
@@ -30,25 +30,25 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
           />
         </TouchableOpacity>
 
-        {/* Лайк */}
         <TouchableOpacity
           onPress={() => toggleLike(place.id)}
           style={s.likeRight}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={liked ? 'Видалити з обраного' : 'Додати до обраного'}
         >
           <MaterialCommunityIcons
             name="heart"
             size={26}
             color={liked ? '#ef4444' : theme.inactiveHeart}
           />
-          <Text style={[s.likeCount, { color: theme.text2 }]}>{place.likes}</Text>
         </TouchableOpacity>
 
         {/* Блок "200м від вас" */}
         <TouchableOpacity
           onPress={() => openPlaceInMaps(place, city)}
           accessibilityRole="button"
-          accessibilityLabel={`Відкрити ${place.name} у Google Maps`}
+          accessibilityLabel={`Відкрити ${place.name || 'місце'} у Google Maps`}
           style={[s.distanceBlock, { backgroundColor:'#1f1f1f' }]}
           activeOpacity={0.7}
         >
@@ -62,27 +62,38 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
       <View style={s.content}>
         <TouchableOpacity onPress={() => onPlacePress?.(place)} activeOpacity={0.7}>
           <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-            {place.name}
+            {place.name || 'Місце без назви'}
           </Text>
         </TouchableOpacity>
         {place.description && <Text style={[s.desc, { color: theme.text2 }]}>{place.description}</Text>}
-        <View style={s.row}>
-          <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
-          <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-            {place.address}
-          </Text>
-          <View style={s.rating}>
-            <Icon name="star" size={18} color="#fbbf24" style={s.icon} />
-            <Text style={[s.detail, { color: theme.text2 }]}>{place.rating.toFixed(1)}</Text>
+        {(place.address || Number.isFinite(place.rating) || Number.isFinite(place.reviewCount)) ? (
+          <View style={s.row}>
+            {place.address ? (
+              <>
+                <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
+                <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                  {place.address}
+                </Text>
+              </>
+            ) : null}
+            {Number.isFinite(place.rating) ? (
+              <View style={s.rating}>
+                <Icon name="star" size={18} color="#fbbf24" style={s.icon} />
+                <Text style={[s.detail, { color: theme.text2 }]}>{place.rating.toFixed(1)}</Text>
+              </View>
+            ) : null}
+            {Number.isFinite(place.reviewCount) ? (
+              <Text style={[s.detail, { color: theme.text2 }]}>{place.reviewCount} відгуків</Text>
+            ) : null}
           </View>
-        </View>
+        ) : null}
       </View>
     </View>
   );
 });
 
 const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
-  const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
+  const filtered = data.places?.filter((p) => p.category === placesFilter) || [];
 
   return (
     <ScrollView contentContainerStyle={s.section} scrollEventThrottle={16}>
@@ -165,11 +176,6 @@ const s = StyleSheet.create({
     right: 8,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  likeCount: {
-    marginLeft: 6,
-    fontSize: 15,
-    fontWeight: '600',
   },
   mapPin: {
     position: 'absolute',

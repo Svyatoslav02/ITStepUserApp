@@ -14,10 +14,11 @@ import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { getSavedPlaceKey } from '../services/useSavedPlaces';
 
-const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
-  const city = route.params?.city || 'Івано-Франківськ';
+const Saved = ({ navigation }) => {
+  const { savedPlaceKeys, toggleSavedPlace, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const city = selectedCity;
   const { data, categories, isLoading, error } = useCityData(city, language);
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
@@ -37,22 +38,15 @@ const Saved = ({ navigation, route }) => {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     sport: 'Спорт',
-  };
-
-  const toggleLike = (id) => {
-    setLikedPlaces((current) => {
-      const next = new Set(current);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    changeCity: language === 'uk' ? 'Змінити місто' : 'Change city',
   };
 
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => likedPlaces.has(place.id) && place.type === placesFilter)
+        ? placesData.filter((place) => savedPlaceKeys.has(getSavedPlaceKey(city, place.id)) && place.type === placesFilter)
         : [],
-    [placesData, likedPlaces, placesFilter]
+    [placesData, savedPlaceKeys, city, placesFilter]
   );
 
   const animations = useMemo(
@@ -93,6 +87,9 @@ const Saved = ({ navigation, route }) => {
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.empty}>
           <Text style={[styles.emptyText, { color: theme.text2 }]}>
@@ -111,6 +108,9 @@ const Saved = ({ navigation, route }) => {
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -170,11 +170,11 @@ const Saved = ({ navigation, route }) => {
                   <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => toggleSavedPlace(city, item.id)} style={styles.like} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Видалити з обраного: ${item.name}`}>
                     <MaterialCommunityIcons
-                      name={likedPlaces.has(item.id) ? 'heart' : 'heart-outline'}
+                      name={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? 'heart' : 'heart-outline'}
                       size={26}
-                      color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
+                      color={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
@@ -234,6 +234,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
+  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
+  changeCityText: { fontSize: 11, fontWeight: '700' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {
     padding: 18,

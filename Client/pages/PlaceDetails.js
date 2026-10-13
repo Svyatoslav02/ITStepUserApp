@@ -1,12 +1,14 @@
 import React, { useContext } from 'react';
 import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Feather as Icon } from '@expo/vector-icons';
+import { Feather as Icon, MaterialCommunityIcons } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import usePlace from '../services/usePlace';
+import { getSavedPlaceKey } from '../services/useSavedPlaces';
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, language, theme } = useContext(AppContext);
-  const { city, placeId } = route.params;
+  const { isDarkMode, language, theme, selectedCity, savedPlaceKeys, toggleSavedPlace } = useContext(AppContext);
+  const { placeId } = route.params;
+  const city = selectedCity || route.params.city;
   const { place, isLoading, error } = usePlace(city, placeId, language);
 
   if (isLoading || !place) {
@@ -14,6 +16,9 @@ export default function PlaceDetails({ navigation, route }) {
       <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Назад">
           <Icon name="chevron-left" size={24} color={theme.bannerText} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
         </TouchableOpacity>
         <Text style={[styles.body, { color: theme.text2 }]}>
           {isLoading ? 'Завантаження місця…' : error ? 'Не вдалося завантажити місце.' : 'Місце не знайдено.'}
@@ -30,6 +35,21 @@ export default function PlaceDetails({ navigation, route }) {
           <Icon name="chevron-left" size={24} color={theme.bannerText} />
         </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{place.name}</Text>
+        <TouchableOpacity
+          onPress={() => toggleSavedPlace(city, placeId)}
+          style={styles.saveButton}
+          accessibilityRole="button"
+          accessibilityLabel={savedPlaceKeys.has(getSavedPlaceKey(city, placeId)) ? 'Видалити з обраного' : 'Додати до обраного'}
+        >
+          <MaterialCommunityIcons
+            name={savedPlaceKeys.has(getSavedPlaceKey(city, placeId)) ? 'heart' : 'heart-outline'}
+            size={22}
+            color={savedPlaceKeys.has(getSavedPlaceKey(city, placeId)) ? '#ef4444' : theme.bannerText}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -59,6 +79,9 @@ const styles = StyleSheet.create({
   loading: { justifyContent: 'center', alignItems: 'center', padding: 24 },
   header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, margin: 12, borderRadius: 12, elevation: 5 },
   backButton: { padding: 6 },
+  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
+  saveButton: { padding: 8 },
+  changeCityText: { fontSize: 11, fontWeight: '700' },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', marginLeft: 4 },
   content: { paddingBottom: 32 },
   image: { width: '100%', height: 260, resizeMode: 'cover' },

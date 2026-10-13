@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
-const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress }) => {
+import { getSavedPlaceKey } from '../services/useSavedPlaces';
+const PlaceCard = memo(({ place, city, isSaved, toggleSaved, theme, onPlacePress }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
@@ -32,14 +33,16 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
 
         {/* Лайк */}
         <TouchableOpacity
-          onPress={() => toggleLike(place.id)}
+          onPress={() => toggleSaved(place.id)}
           style={s.likeRight}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isSaved ? `Видалити з обраного: ${place.name}` : `Додати до обраного: ${place.name}`}
         >
           <MaterialCommunityIcons
-            name="heart"
+            name={isSaved ? 'heart' : 'heart-outline'}
             size={26}
-            color={liked ? '#ef4444' : theme.inactiveHeart}
+            color={isSaved ? '#ef4444' : theme.inactiveHeart}
           />
           <Text style={[s.likeCount, { color: theme.text2 }]}>{place.likes}</Text>
         </TouchableOpacity>
@@ -81,7 +84,7 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
   );
 });
 
-const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
+const PlacesWidget = memo(({ data, theme, t, savedPlaceKeys, toggleSaved, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
   const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
 
   return (
@@ -120,8 +123,8 @@ const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilt
             key={p.id}
             place={p}
             city={city}
-            liked={likedPlaces.has(p.id)}
-            toggleLike={toggleLike}
+            isSaved={savedPlaceKeys.has(getSavedPlaceKey(city, p.id))}
+            toggleSaved={toggleSaved}
             theme={theme}
             onPlacePress={onPlacePress}
           />

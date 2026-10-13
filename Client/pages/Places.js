@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { EmptyState } from './components/StateViews';
 const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
@@ -83,37 +84,40 @@ const PlaceCard = memo(({ place, city, liked, toggleLike, theme, onPlacePress })
 
 const PlacesWidget = memo(({ data, theme, t, likedPlaces, toggleLike, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
   const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
+  const hasCategories = categories && categories.length > 0;
 
   return (
     <ScrollView contentContainerStyle={s.section} scrollEventThrottle={16}>
       <View style={[s.card, { backgroundColor: theme.card }]}>
         <Text style={[s.title, { color: theme.text }]}>{t.places}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filters}>
-          {categories.map((f) => (
-            <TouchableOpacity
-              key={f.id}
-              onPress={() => setPlacesFilter(f.id)}
-              style={[
-                s.filter,
-                placesFilter === f.id
-                  ? { backgroundColor: theme.accent }
-                  : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={f.icon}
-                size={20}
-                color={placesFilter === f.id ? theme.favBtnText : theme.text}
-              />
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {hasCategories ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filters}>
+            {categories.map((f) => (
+              <TouchableOpacity
+                key={f.id}
+                onPress={() => setPlacesFilter(f.id)}
+                style={[
+                  s.filter,
+                  placesFilter === f.id
+                    ? { backgroundColor: theme.accent }
+                    : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={f.icon}
+                  size={20}
+                  color={placesFilter === f.id ? theme.favBtnText : theme.text}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        ) : (
+          <EmptyState message="Категорії недоступні." theme={theme} framed={false} />
+        )}
       </View>
 
       {filtered.length === 0 ? (
-        <View style={s.empty}>
-          <Text style={[s.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-        </View>
+        <EmptyState message={t.placesUnavailable} theme={theme} />
       ) : (
         filtered.map((p) => (
           <PlaceCard

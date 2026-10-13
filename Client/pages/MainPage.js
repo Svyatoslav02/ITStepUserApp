@@ -1,17 +1,23 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
   SafeAreaView,
   StatusBar,
-  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
-import cityData from './Data';
-import Saved from './Saved';
-import MainTabs from './components/MainTabs';
+import AppContext from '../AppContext';
+import useCityData from '../services/useCityData';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
 import AccommodationScreen from './screens/AccommodationScreen';
@@ -19,160 +25,220 @@ import EventsScreen from './screens/EventsScreen';
 import Donate from './Donate';
 import WeatherWidget from './Weather';
 
-const DARK_THEME = {
-  bg: '#121212',
-  card: '#1f1f1f',
-  text: '#e5e5e5',
-  text2: '#aaaaaa',
-  accent: '#FFD700',
-  banner: '#1f1f1f',
-  bannerText: '#FFD700',
-  inactiveHeart: '#1f1f1f',
-  favBtnBg: '#FFD700',
-  favBtnText: '#000000',
+const Tab = createBottomTabNavigator();
+const CityTabsContext = createContext(null);
+
+const TAB_ICONS = {
+  History: 'clock',
+  Places: 'map',
+  Accommodation: 'moon',
+  Events: 'calendar',
 };
 
-const LIGHT_THEME = {
-  bg: '#f0f4f8',
-  card: '#ffffff',
-  text: '#1f2937',
-  text2: '#4b5563',
-  accent: 'rgb(67, 80, 105)',
-  banner: '#1f2937',
-  bannerText: '#ffffff',
-  inactiveHeart: '#1f2937',
-  favBtnBg: '#1f2937',
-  favBtnText: '#ffffff',
-};
+function useCityTabs() {
+  const context = useContext(CityTabsContext);
+  if (!context) {
+    throw new Error('City tabs context is missing');
+  }
 
-const TabScene = ({ isActive, children }) => (
-  <View
-    style={[s.scene, !isActive && s.hiddenScene]}
-    pointerEvents={isActive ? 'auto' : 'none'}
-  >
-    {children}
-  </View>
-);
+  return context;
+}
 
-const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage, setIsDarkMode }) => {
-  const [activeTab, setActiveTab] = useState('history');
+const HistoryTabScreen = memo(() => {
+  const { data, theme, t } = useCityTabs();
+
+  return <HistoryScreen items={data.history} theme={theme} t={t} />;
+});
+
+const PlacesTabScreen = memo(() => {
+  const {
+    categories,
+    data,
+    likedPlaces,
+    openPlaceDetails,
+    placesFilter,
+    selectedCity,
+    setPlacesFilter,
+    theme,
+    t,
+    toggleLike,
+  } = useCityTabs();
+
+  return (
+    <PlacesScreen
+      places={data.places}
+      city={selectedCity}
+      categories={categories}
+      likedPlaces={likedPlaces}
+      onFilterChange={setPlacesFilter}
+      onPlacePress={openPlaceDetails}
+      onToggleLike={toggleLike}
+      selectedFilter={placesFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const AccommodationTabScreen = memo(() => {
+  const {
+    accommodationFilter,
+    data,
+    selectedCity,
+    setAccommodationFilter,
+    theme,
+    t,
+  } = useCityTabs();
+
+  return (
+    <AccommodationScreen
+      accommodation={data.accommodation}
+      city={selectedCity}
+      onFilterChange={setAccommodationFilter}
+      selectedFilter={accommodationFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const EventsTabScreen = memo(() => {
+  const { data, eventsFilter, setEventsFilter, theme, t } = useCityTabs();
+
+  return (
+    <EventsScreen
+      events={data.events}
+      onFilterChange={setEventsFilter}
+      selectedFilter={eventsFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const CityTabs = memo(() => {
+  const { theme, t } = useCityTabs();
+
+  return (
+    <Tab.Navigator
+      detachInactiveScreens={false}
+      screenOptions={({ route: tabRoute }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.text2,
+        tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.text2 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '700' },
+        unmountOnBlur: false,
+        tabBarIcon: ({ color, size }) => (
+          <Icon name={TAB_ICONS[tabRoute.name]} size={size} color={color} />
+        ),
+      })}
+    >
+      <Tab.Screen name="History" component={HistoryTabScreen} options={{ title: t.history }} />
+      <Tab.Screen name="Places" component={PlacesTabScreen} options={{ title: t.places }} />
+      <Tab.Screen name="Accommodation" component={AccommodationTabScreen} options={{ title: t.accommodation }} />
+      <Tab.Screen name="Events" component={EventsTabScreen} options={{ title: t.events }} />
+    </Tab.Navigator>
+  );
+});
+
+export default function MainPage({ navigation, route }) {
+  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, theme } = useContext(AppContext);
+  const selectedCity = route.params?.city || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
-  const [likedPlaces, setLikedPlaces] = useState(new Set());
-  const [showFavorites, setShowFavorites] = useState(false);
   const [isDonateVisible, setIsDonateVisible] = useState(false);
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    fadeAnim.setValue(0);
-    slideAnim.setValue(20);
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [activeTab]);
-
+  const { data, categories, isLoading, error } = useCityData(selectedCity, language);
   const t = useMemo(() => ({
-    history: 'Історія',
-    places: 'Місця',
-    accommodation: 'Ночівля',
-    events: 'Події',
-    close: 'Закрити',
-    favoritesButton: 'Обрані місця',
-    weather: 'Погода',
-    currentWeather: 'Поточна погода',
-    temperature: 'Температура',
-    humidity: 'Вологість',
-    wind: 'Вітер',
-    share: 'Підтримати',
-    shareMessage: `Подивись цей чудовий додаток про ${selectedCity}!`,
-    food: 'Їжа',
-    culture: 'Культура',
-    nature: 'Природа',
-    shopping: 'Шопінг',
-    entertainment: 'Розваги',
-    concert: 'Концерти',
-    unavailable: 'недоступна',
-    placesUnavailable: 'Місця недоступні',
-    rating: 'Рейтинг',
-    address: 'Адреса',
-    description: 'Опис',
-  }), [selectedCity]);
-
-  const theme = isDarkMode ? DARK_THEME : LIGHT_THEME;
-
-  const data = useMemo(() => ({
-    weather: cityData[selectedCity]?.weather.uk,
-    places: cityData[selectedCity]?.places.uk,
-    history: cityData[selectedCity]?.history.uk,
-    accommodation: cityData[selectedCity]?.accommodation.uk,
-    events: cityData[selectedCity]?.events.uk,
-  }), [selectedCity]);
-
-  const handleSupport = useCallback(() => {
-    setIsDonateVisible(true);
-  }, []);
-
-  const handleCloseDonate = useCallback(() => {
-    setIsDonateVisible(false);
-  }, []);
-
-  const handleTabPress = useCallback((tabId) => {
-    setActiveTab(tabId);
-  }, []);
+    history: language === 'uk' ? 'Історія' : 'History',
+    places: language === 'uk' ? 'Місця' : 'Places',
+    accommodation: language === 'uk' ? 'Ночівля' : 'Stay',
+    events: language === 'uk' ? 'Події' : 'Events',
+    favoritesButton: language === 'uk' ? 'Обрані місця' : 'Saved places',
+    weather: language === 'uk' ? 'Погода' : 'Weather',
+    currentWeather: language === 'uk' ? 'Поточна погода' : 'Current weather',
+    temperature: language === 'uk' ? 'Температура' : 'Temperature',
+    humidity: language === 'uk' ? 'Вологість' : 'Humidity',
+    wind: language === 'uk' ? 'Вітер' : 'Wind',
+    food: language === 'uk' ? 'Їжа' : 'Food',
+    culture: language === 'uk' ? 'Культура' : 'Culture',
+    nature: language === 'uk' ? 'Природа' : 'Nature',
+    shopping: language === 'uk' ? 'Шопінг' : 'Shopping',
+    entertainment: language === 'uk' ? 'Розваги' : 'Entertainment',
+    unavailable: language === 'uk' ? 'недоступна' : 'unavailable',
+    placesUnavailable: language === 'uk' ? 'Місця недоступні' : 'Places unavailable',
+    rating: language === 'uk' ? 'Рейтинг' : 'Rating',
+    address: language === 'uk' ? 'Адреса' : 'Address',
+    description: language === 'uk' ? 'Опис' : 'Description',
+  }), [language]);
 
   const toggleLike = useCallback((id) => {
-    setLikedPlaces((prev) => {
-      const newSet = new Set(prev);
-      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
-      return newSet;
+    setLikedPlaces((current) => {
+      const next = new Set(current);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
     });
-  }, []);
+  }, [setLikedPlaces]);
 
-  if (showFavorites) {
+  const openPlaceDetails = useCallback(
+    (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity }),
+    [navigation, selectedCity]
+  );
+
+  const cityTabsValue = useMemo(() => ({
+    accommodationFilter,
+    categories,
+    data,
+    eventsFilter,
+    likedPlaces,
+    openPlaceDetails,
+    placesFilter,
+    selectedCity,
+    setAccommodationFilter,
+    setEventsFilter,
+    setPlacesFilter,
+    theme,
+    t,
+    toggleLike,
+  }), [
+    accommodationFilter,
+    categories,
+    data,
+    eventsFilter,
+    likedPlaces,
+    openPlaceDetails,
+    placesFilter,
+    selectedCity,
+    theme,
+    t,
+    toggleLike,
+  ]);
+
+  if (isLoading || !data) {
     return (
-      <Saved
-        likedPlaces={likedPlaces}
-        placesData={data.places}
-        language={language}
-        isDarkMode={isDarkMode}
-        toggleLike={toggleLike}
-        onBackPress={() => setShowFavorites(false)}
-      />
+      <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
+        <Text style={{ color: theme.text2 }}>{error ? 'Не вдалося завантажити дані міста.' : 'Завантаження даних міста…'}</Text>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[s.container, { backgroundColor: theme.bg }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <View style={[s.header, { backgroundColor: theme.banner }]}>
-        <TouchableOpacity onPress={onBackPress} style={s.iconBtn}>
+      <View style={[styles.header, { backgroundColor: theme.banner }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Назад">
           <Icon name="chevron-left" size={24} color={theme.bannerText} />
         </TouchableOpacity>
-        <Text numberOfLines={1} style={[s.headerTitle, { color: theme.bannerText }]}>
-          {selectedCity}
-        </Text>
-        <View style={s.controls}>
+        <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
+        <View style={styles.controls}>
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
-            <Text style={[s.lang, { color: theme.bannerText }]}>
-              {language === 'uk' ? 'EN' : 'UKR'}
-            </Text>
+            <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSupport}>
+          <TouchableOpacity onPress={() => setIsDonateVisible(true)}>
             <Icon name="gift" size={24} color={theme.bannerText} style={{ marginRight: 12 }} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={s.iconBtn}>
+          <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconButton}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
           </TouchableOpacity>
         </View>
@@ -180,105 +246,39 @@ const MainPage = ({ selectedCity, onBackPress, language, isDarkMode, setLanguage
 
       <WeatherWidget data={data} theme={theme} t={t} selectedCity={selectedCity} />
 
-      <View style={s.favBtnContainer}>
+      <View style={styles.favoritesRow}>
         <TouchableOpacity
-          style={[s.favBtn, { backgroundColor: theme.favBtnBg }]}
-          onPress={() => setShowFavorites(true)}
+          style={[styles.favoritesButton, { backgroundColor: theme.favBtnBg }]}
+          onPress={() => navigation.navigate('Saved', { city: selectedCity })}
           activeOpacity={0.8}
         >
           <Icon name="heart" size={20} color={theme.favBtnText} style={{ marginRight: 6 }} />
-          <Text style={[s.favBtnText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
+          <Text style={[styles.favoritesText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
         </TouchableOpacity>
       </View>
 
-      <MainTabs
-        activeTab={activeTab}
-        onTabPress={handleTabPress}
-        t={t}
-        theme={theme}
-        isDarkMode={isDarkMode}
-      />
-
-      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        <TabScene isActive={activeTab === 'history'}>
-          <HistoryScreen items={data.history} theme={theme} t={t} />
-        </TabScene>
-        <TabScene isActive={activeTab === 'places'}>
-          <PlacesScreen
-            places={data.places}
-            theme={theme}
-            t={t}
-            likedPlaces={likedPlaces}
-            onToggleLike={toggleLike}
-            selectedFilter={placesFilter}
-            onFilterChange={setPlacesFilter}
-          />
-        </TabScene>
-        <TabScene isActive={activeTab === 'accommodation'}>
-          <AccommodationScreen
-            accommodation={data.accommodation}
-            theme={theme}
-            t={t}
-            selectedFilter={accommodationFilter}
-            onFilterChange={setAccommodationFilter}
-          />
-        </TabScene>
-        <TabScene isActive={activeTab === 'events'}>
-          <EventsScreen
-            events={data.events}
-            theme={theme}
-            t={t}
-            selectedFilter={eventsFilter}
-            onFilterChange={setEventsFilter}
-          />
-        </TabScene>
-      </Animated.View>
+      <CityTabsContext.Provider value={cityTabsValue}>
+        <CityTabs />
+      </CityTabsContext.Provider>
 
       <Donate
         isVisible={isDonateVisible}
-        onClose={handleCloseDonate}
+        onClose={() => setIsDonateVisible(false)}
         theme={theme}
         language={language}
       />
     </SafeAreaView>
   );
-};
+}
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   container: { flex: 1 },
-  scene: { flex: 1 },
-  hiddenScene: { display: 'none' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    margin: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 6,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', letterSpacing: 0.6, marginLeft: 8 },
-  controls: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
-  lang: { fontSize: 16, fontWeight: '600', letterSpacing: 0.5, marginRight: 16 },
-  iconBtn: { padding: 8 },
-  favBtnContainer: { marginVertical: 8, paddingHorizontal: 16, alignItems: 'center' },
-  favBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  favBtnText: { fontSize: 17, fontWeight: 'bold' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, borderRadius: 12, margin: 12, elevation: 5 },
+  iconButton: { padding: 6, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', letterSpacing: 0.4, marginLeft: 4 },
+  controls: { flexDirection: 'row', alignItems: 'center' },
+  lang: { fontSize: 14, fontWeight: '700', padding: 8 },
+  favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
+  favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
+  favoritesText: { fontSize: 15, fontWeight: '700' },
 });
-
-export default MainPage;

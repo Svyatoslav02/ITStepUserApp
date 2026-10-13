@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,15 @@ import {
   Animated,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
+import AppContext from '../AppContext';
+import useCityData from '../services/useCityData';
+import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
-const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBackPress }) => {
+const Saved = ({ navigation, route }) => {
+  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
+  const city = route.params?.city || 'Івано-Франківськ';
+  const { data, categories, isLoading, error } = useCityData(city, language);
+  const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 
@@ -32,37 +39,13 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
     sport: 'Спорт',
   };
 
-  const darkTheme = {
-    background: '#121212',
-    card: '#1f1f1f',
-    text: '#e5e5e5',
-    text2: '#aaaaaa',
-    accent: '#FFD700',
-    bannerBackground: '#1f1f1f',
-    bannerText: '#FFD700',
-    inactiveHeart: '#1f1f1f',
+  const toggleLike = (id) => {
+    setLikedPlaces((current) => {
+      const next = new Set(current);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
-
-  const lightTheme = {
-    background: '#f0f4f8',
-    card: '#ffffff',
-    text: '#1f2937',
-    text2: '#4b5563',
-    accent: 'rgb(67, 80, 105)',
-    bannerBackground: '#1f2937',
-    bannerText: '#ffffff',
-    inactiveHeart: '#1f2937',
-  };
-
-  const theme = isDarkMode ? darkTheme : lightTheme;
-
-  const filters = [
-    { id: 'food', icon: 'silverware-fork-knife' },
-    { id: 'culture', icon: 'drama-masks' },
-    { id: 'nature', icon: 'tree' },
-    { id: 'shopping', icon: 'shopping' },
-    { id: 'entertainment', icon: 'movie-open' },
-  ];
 
   const filteredFavorites = useMemo(
     () =>
@@ -101,18 +84,20 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (!placesData || placesData.length === 0) {
+  if (isLoading || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
-          <TouchableOpacity onPress={onBackPress} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
         </View>
         <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
+          <Text style={[styles.emptyText, { color: theme.text2 }]}>
+            {isLoading ? 'Завантаження…' : error ? 'Не вдалося завантажити місця.' : t.placesUnavailable}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -122,7 +107,7 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
-        <TouchableOpacity onPress={onBackPress} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
@@ -136,8 +121,8 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
       >
         {/* Кнопка "Переглянути карту" */}
         <View style={styles.mapButtonContainer}>
-          <TouchableOpacity style={[styles.mapButton, { backgroundColor: theme.accent }]}>
-            <Text style={styles.mapButtonText}>Переглянути карту</Text>
+          <TouchableOpacity onPress={() => openPlaceInMaps({ name: city }, city)} style={[styles.mapButton, { backgroundColor: theme.accent }]} accessibilityRole="button">
+            <Text style={styles.mapButtonText}>Відкрити місто в Google Maps</Text>
           </TouchableOpacity>
         </View>
 
@@ -145,7 +130,7 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
           <Text style={[styles.title, { color: theme.text }]}>{t.places}</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-            {filters.map((f) => (
+            {categories.map((f) => (
               <TouchableOpacity
                 key={f.id}
                 onPress={() => setPlacesFilter(f.id)}
@@ -182,7 +167,7 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
               <View style={[styles.card, { backgroundColor: theme.card }]}>
                 <View style={styles.imageContainer}>
                   {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
-                  <TouchableOpacity onPress={() => {}} style={styles.shareLeft} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
@@ -192,17 +177,19 @@ const Saved = ({ likedPlaces, placesData, language, isDarkMode, toggleLike, onBa
                       color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => {}} style={styles.distanceBlock} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
-                      <Text style={styles.distanceText}>200м від вас</Text>
+                      <Text style={styles.distanceText}>Google Maps</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
                 <View style={styles.content}>
-                  <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-                    {item.name}
-                  </Text>
+                  <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { placeId: item.id, city })} activeOpacity={0.7}>
+                    <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
                   {item.description && (
                     <Text style={[styles.desc, { color: theme.text2 }]}>{item.description}</Text>
                   )}

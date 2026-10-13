@@ -8,8 +8,9 @@ import {
   Image,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
+import { openPlaceInMaps, sharePlace } from '../../utils/placeActions';
 
-const PLACE_FILTERS = [
+const DEFAULT_PLACE_FILTERS = [
   { id: 'food', icon: 'silverware-fork-knife' },
   { id: 'culture', icon: 'drama-masks' },
   { id: 'nature', icon: 'tree' },
@@ -17,12 +18,18 @@ const PLACE_FILTERS = [
   { id: 'entertainment', icon: 'movie-open' },
 ];
 
-const PlaceCard = memo(({ place, liked, onToggleLike, theme }) => (
+const PlaceCard = memo(({ place, city, liked, onPlacePress, onToggleLike, theme }) => (
   <View style={[s.card, { backgroundColor: theme.card }]}>
     <View style={s.imageContainer}>
       {place.image && <Image source={{ uri: place.image }} style={s.image} />}
 
-      <TouchableOpacity onPress={() => {}} style={s.shareLeft} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={() => sharePlace(place, city)}
+        accessibilityRole="button"
+        accessibilityLabel={`Поділитися місцем: ${place.name}`}
+        style={s.shareLeft}
+        activeOpacity={0.7}
+      >
         <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
       </TouchableOpacity>
 
@@ -40,21 +47,25 @@ const PlaceCard = memo(({ place, liked, onToggleLike, theme }) => (
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => {}}
+        onPress={() => openPlaceInMaps(place, city)}
+        accessibilityRole="button"
+        accessibilityLabel={`Відкрити ${place.name} у Google Maps`}
         style={[s.distanceBlock, { backgroundColor: '#1f1f1f' }]}
         activeOpacity={0.7}
       >
         <View style={s.distanceContent}>
           <Icon name="navigation" size={18} color="#fbbf24" />
-          <Text style={s.distanceText}>200м від вас</Text>
+          <Text style={s.distanceText}>Google Maps</Text>
         </View>
       </TouchableOpacity>
     </View>
 
     <View style={s.content}>
-      <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-        {place.name}
-      </Text>
+      <TouchableOpacity onPress={() => onPlacePress?.(place)} activeOpacity={0.7}>
+        <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+          {place.name}
+        </Text>
+      </TouchableOpacity>
       {place.description && <Text style={[s.desc, { color: theme.text2 }]}>{place.description}</Text>}
       <View style={s.row}>
         <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
@@ -72,13 +83,17 @@ const PlaceCard = memo(({ place, liked, onToggleLike, theme }) => (
 
 const PlacesScreen = memo(({
   places,
+  city,
+  categories,
   theme,
   t,
   likedPlaces,
   onToggleLike,
+  onPlacePress,
   selectedFilter,
   onFilterChange,
 }) => {
+  const filters = categories?.length ? categories : DEFAULT_PLACE_FILTERS;
   const filtered = useMemo(
     () => places?.filter((place) => place.type === selectedFilter) || [],
     [places, selectedFilter]
@@ -94,7 +109,7 @@ const PlacesScreen = memo(({
           style={s.filters}
           contentContainerStyle={s.filtersContent}
         >
-          {PLACE_FILTERS.map((filter) => (
+          {filters.map((filter) => (
             <TouchableOpacity
               key={filter.id}
               onPress={() => onFilterChange(filter.id)}
@@ -125,7 +140,9 @@ const PlacesScreen = memo(({
           <PlaceCard
             key={place.id}
             place={place}
+            city={city}
             liked={likedPlaces.has(place.id)}
+            onPlacePress={onPlacePress}
             onToggleLike={onToggleLike}
             theme={theme}
           />

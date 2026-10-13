@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
+import { sharePlace } from '../../utils/placeActions';
 
 const ACCOMMODATION_FILTERS = [
   { id: 'hotel', icon: 'office-building' },
@@ -15,11 +16,17 @@ const ACCOMMODATION_FILTERS = [
   { id: 'hostel', icon: 'bunk-bed' },
 ];
 
-const AccommodationCard = memo(({ accommodation, theme }) => (
+const AccommodationCard = memo(({ accommodation, city, theme }) => (
   <View style={[s.card, { backgroundColor: theme.card }]}>
     <View style={s.imageContainer}>
       {accommodation.image && <Image source={{ uri: accommodation.image }} style={s.image} />}
-      <TouchableOpacity onPress={() => {}} style={s.shareLeft} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={() => sharePlace(accommodation, city)}
+        accessibilityRole="button"
+        accessibilityLabel={`Поділитися місцем: ${accommodation.title}`}
+        style={s.shareLeft}
+        activeOpacity={0.7}
+      >
         <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
       </TouchableOpacity>
     </View>
@@ -46,6 +53,7 @@ const AccommodationCard = memo(({ accommodation, theme }) => (
 
 const AccommodationScreen = memo(({
   accommodation,
+  city,
   theme,
   t,
   selectedFilter,
@@ -94,7 +102,7 @@ const AccommodationScreen = memo(({
         </View>
       ) : (
         filtered.map((item) => (
-          <AccommodationCard key={item.id} accommodation={item} theme={theme} />
+          <AccommodationCard key={item.id} accommodation={item} city={city} theme={theme} />
         ))
       )}
     </ScrollView>

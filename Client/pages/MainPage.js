@@ -12,6 +12,7 @@ import {
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
+import { useTheme } from '../contexts/ThemeContext';
 import useCityData from '../services/useCityData';
 import PlacesWidget from './Places';
 import AccommodationWidget from './AccommodationWidget';
@@ -42,7 +43,8 @@ function HistoryScreen({ items, theme, title }) {
 }
 
 export default function MainPage({ navigation }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, savedPlaceKeys, toggleSavedPlace, selectedCity, theme } = useContext(AppContext);
+  const { language, setLanguage, savedPlaceKeys, toggleSavedPlace, selectedCity } = useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, theme } = useTheme();
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
@@ -84,7 +86,7 @@ export default function MainPage({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={theme.statusBarStyle} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>

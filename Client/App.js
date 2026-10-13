@@ -24,28 +24,14 @@ import useCities from './services/useCities';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
 import useSavedPlaces from './services/useSavedPlaces';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 const Stack = createStackNavigator();
 const SELECTED_CITY_KEY = 'selectedCity';
 
-const makeTheme = (isDarkMode) => ({
-  bg: isDarkMode ? '#121212' : '#f0f4f8',
-  background: isDarkMode ? '#121212' : '#f0f4f8',
-  card: isDarkMode ? '#1f1f1f' : '#ffffff',
-  text: isDarkMode ? '#e5e5e5' : '#1f2937',
-  text2: isDarkMode ? '#aaaaaa' : '#4b5563',
-  accent: isDarkMode ? '#FFD700' : 'rgb(67, 80, 105)',
-  banner: '#1f1f1f',
-  bannerBackground: '#1f1f1f',
-  bannerText: isDarkMode ? '#FFD700' : '#ffffff',
-  inactiveHeart: isDarkMode ? '#444444' : '#1f2937',
-  favBtnBg: isDarkMode ? '#FFD700' : '#1f2937',
-  favBtnText: isDarkMode ? '#000000' : '#ffffff',
-  shadow: isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)',
-});
-
 function CitySelectScreen({ navigation }) {
-  const { language, setLanguage, isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
+  const { language, setLanguage, setSelectedCity } = React.useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
@@ -53,7 +39,7 @@ function CitySelectScreen({ navigation }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={theme.statusBarStyle} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>Оберіть місто</Text>
         <View style={styles.controls}>
@@ -118,8 +104,8 @@ function CitySelectScreen({ navigation }) {
   );
 }
 
-export default function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+function AppContent() {
+  const { theme, isThemeReady } = useTheme();
   const [language, setLanguage] = useState('uk');
   const { savedPlaceKeys, toggleSavedPlace, isLoading: areSavedPlacesLoading } = useSavedPlaces();
   const [selectedCity, setSelectedCityState] = useState(null);
@@ -139,22 +125,18 @@ export default function App() {
     await AsyncStorage.setItem(SELECTED_CITY_KEY, city);
     setSelectedCityState(city);
   }, []);
-  const theme = useMemo(() => makeTheme(isDarkMode), [isDarkMode]);
   const contextValue = useMemo(() => ({
-    isDarkMode,
-    setIsDarkMode,
     language,
     setLanguage,
     savedPlaceKeys,
     toggleSavedPlace,
     selectedCity,
     setSelectedCity,
-    theme,
-  }), [isDarkMode, language, savedPlaceKeys, selectedCity, setSelectedCity, theme, toggleSavedPlace]);
+  }), [language, savedPlaceKeys, selectedCity, setSelectedCity, toggleSavedPlace]);
 
   return (
     <AppContext.Provider value={contextValue}>
-      {!isCityReady || areSavedPlacesLoading ? (
+      {!isThemeReady || !isCityReady || areSavedPlacesLoading ? (
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>
@@ -168,6 +150,10 @@ export default function App() {
       )}
     </AppContext.Provider>
   );
+}
+
+export default function App() {
+  return <ThemeProvider><AppContent /></ThemeProvider>;
 }
 
 const styles = StyleSheet.create({

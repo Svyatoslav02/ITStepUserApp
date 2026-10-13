@@ -14,9 +14,10 @@ import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { getSavedPlaceKey } from '../services/useSavedPlaces';
 
 const Saved = ({ navigation }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const { savedPlaceKeys, toggleSavedPlace, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
   const city = selectedCity;
   const { data, categories, isLoading, error } = useCityData(city, language);
   const placesData = data?.places || [];
@@ -40,20 +41,12 @@ const Saved = ({ navigation }) => {
     changeCity: language === 'uk' ? 'Змінити місто' : 'Change city',
   };
 
-  const toggleLike = (id) => {
-    setLikedPlaces((current) => {
-      const next = new Set(current);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => likedPlaces.has(place.id) && place.type === placesFilter)
+        ? placesData.filter((place) => savedPlaceKeys.has(getSavedPlaceKey(city, place.id)) && place.type === placesFilter)
         : [],
-    [placesData, likedPlaces, placesFilter]
+    [placesData, savedPlaceKeys, city, placesFilter]
   );
 
   const animations = useMemo(
@@ -177,11 +170,11 @@ const Saved = ({ navigation }) => {
                   <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => toggleSavedPlace(city, item.id)} style={styles.like} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Видалити з обраного: ${item.name}`}>
                     <MaterialCommunityIcons
-                      name={likedPlaces.has(item.id) ? 'heart' : 'heart-outline'}
+                      name={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? 'heart' : 'heart-outline'}
                       size={26}
-                      color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
+                      color={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>

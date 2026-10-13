@@ -42,7 +42,7 @@ function HistoryScreen({ items, theme, title }) {
 }
 
 export default function MainPage({ navigation }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, selectedCity, theme } = useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, language, setLanguage, savedPlaceKeys, toggleSavedPlace, selectedCity, theme } = useContext(AppContext);
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
@@ -71,13 +71,7 @@ export default function MainPage({ navigation }) {
     description: language === 'uk' ? 'Опис' : 'Description',
   };
 
-  const toggleLike = (id) => {
-    setLikedPlaces((current) => {
-      const next = new Set(current);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
+  const toggleSaved = (id) => toggleSavedPlace(selectedCity, id);
   const openPlaceDetails = (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity });
 
   if (isLoading || !data) {
@@ -144,8 +138,8 @@ export default function MainPage({ navigation }) {
               data={data}
               theme={theme}
               t={t}
-              likedPlaces={likedPlaces}
-              toggleLike={toggleLike}
+              savedPlaceKeys={savedPlaceKeys}
+              toggleSaved={toggleSaved}
               placesFilter={placesFilter}
               setPlacesFilter={setPlacesFilter}
               onPlacePress={openPlaceDetails}

@@ -41,9 +41,8 @@ function HistoryScreen({ items, theme, title }) {
   );
 }
 
-export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, theme } = useContext(AppContext);
-  const selectedCity = route.params?.city || 'Івано-Франківськ';
+export default function MainPage({ navigation }) {
+  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, selectedCity, theme } = useContext(AppContext);
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
@@ -93,11 +92,11 @@ export default function MainPage({ navigation, route }) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Назад">
-          <Icon name="chevron-left" size={24} color={theme.bannerText} />
-        </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>
+          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
             <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
           </TouchableOpacity>
@@ -196,6 +195,8 @@ const styles = StyleSheet.create({
   iconButton: { padding: 6, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', letterSpacing: 0.4, marginLeft: 4 },
   controls: { flexDirection: 'row', alignItems: 'center' },
+  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
+  changeCityText: { fontSize: 12, fontWeight: '700' },
   lang: { fontSize: 14, fontWeight: '700', padding: 8 },
   favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
   favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },

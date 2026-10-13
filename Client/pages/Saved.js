@@ -16,9 +16,9 @@ import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
 const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
+  const { likedPlaces, setLikedPlaces, isDarkMode, theme } = useContext(AppContext);
   const city = route.params?.city || 'Івано-Франківськ';
-  const { data, categories, isLoading, error } = useCityData(city, language);
+  const { data, categories, isLoading, error } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);

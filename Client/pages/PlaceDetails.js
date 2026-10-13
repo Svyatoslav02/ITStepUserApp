@@ -5,9 +5,9 @@ import AppContext from '../AppContext';
 import usePlace from '../services/usePlace';
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, language, theme } = useContext(AppContext);
+  const { isDarkMode, theme } = useContext(AppContext);
   const { city, placeId } = route.params;
-  const { place, isLoading, error } = usePlace(city, placeId, language);
+  const { place, isLoading, error } = usePlace(city, placeId, 'uk');
 
   if (isLoading || !place) {
     return (

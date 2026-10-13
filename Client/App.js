@@ -40,7 +40,7 @@ const makeTheme = (isDarkMode) => ({
 });
 
 function CitySelectScreen({ navigation }) {
-  const { language, setLanguage, isDarkMode, setIsDarkMode, theme } = React.useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, theme } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
@@ -52,9 +52,6 @@ function CitySelectScreen({ navigation }) {
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>Оберіть місто</Text>
         <View style={styles.controls}>
-          <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')} style={styles.lang}>
-            <Text style={{ color: theme.bannerText, fontWeight: '700' }}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDonateVisible(true)} style={styles.iconBtn}>
             <Icon name="gift" size={24} color={theme.bannerText} />
           </TouchableOpacity>
@@ -104,7 +101,6 @@ function CitySelectScreen({ navigation }) {
         isVisible={isDonateVisible}
         onClose={() => setIsDonateVisible(false)}
         theme={theme}
-        language={language}
       />
     </SafeAreaView>
   );
@@ -112,18 +108,15 @@ function CitySelectScreen({ navigation }) {
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState('uk');
   const [likedPlaces, setLikedPlaces] = useState(new Set());
   const theme = useMemo(() => makeTheme(isDarkMode), [isDarkMode]);
   const contextValue = useMemo(() => ({
     isDarkMode,
     setIsDarkMode,
-    language,
-    setLanguage,
     likedPlaces,
     setLikedPlaces,
     theme,
-  }), [isDarkMode, language, likedPlaces, theme]);
+  }), [isDarkMode, likedPlaces, theme]);
 
   return (
     <AppContext.Provider value={contextValue}>
@@ -155,7 +148,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: 0.6 },
   controls: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
-  lang: { marginRight: 12, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#777' },
   iconBtn: { padding: 8, alignItems: 'center', justifyContent: 'center' },
   searchContainer: {
     flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginVertical: 16,

@@ -12,18 +12,13 @@ import {
 } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
 
-const Donate = ({ isVisible, onClose, theme, language }) => {
+const Donate = ({ isVisible, onClose, theme }) => {
   const t = {
-    uk: {
-      title: 'Підтримати проєкт',
-      go: 'Перейти',
-      bank: 'Monobank Банка',
-    },
-    en: {
-      title: 'Support the Project',
-      go: 'Go',
-      bank: 'Monobank Jar',
-    },
+    title: 'Підтримати проєкт',
+    go: 'Перейти',
+    bank: 'Monobank Банка',
+    error: 'Помилка',
+    linkError: 'Не вдалося відкрити посилання.',
   };
 
   const handleGo = async () => {
@@ -33,15 +28,10 @@ const Donate = ({ isVisible, onClose, theme, language }) => {
       if (supported) {
         await Linking.openURL(url);
       } else {
-        Alert.alert(
-          language === 'uk' ? 'Помилка' : 'Error',
-          language === 'uk'
-            ? 'Не вдалося відкрити посилання.'
-            : 'Unable to open the link.'
-        );
+        Alert.alert(t.error, t.linkError);
       }
     } catch (error) {
-      Alert.alert(language === 'uk' ? 'Помилка' : 'Error', error.message);
+      Alert.alert(t.error, error.message);
     }
   };
 
@@ -64,11 +54,11 @@ const Donate = ({ isVisible, onClose, theme, language }) => {
           </TouchableOpacity>
 
           <Text style={[styles.bankText, { color: theme.accent }]}>
-            {t[language].bank}
+            {t.bank}
           </Text>
 
           <Text style={[styles.modalTitle, { color: theme.text }]}>
-            {t[language].title}
+            {t.title}
           </Text>
 
           <View style={styles.qrCodeContainer}>
@@ -91,7 +81,7 @@ const Donate = ({ isVisible, onClose, theme, language }) => {
             ]}
           >
             <Text style={[styles.goButtonText, { color: theme.favBtnText }]}>
-              {t[language].go}
+              {t.go}
             </Text>
           </Pressable>
         </View>

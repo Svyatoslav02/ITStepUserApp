@@ -14,11 +14,12 @@ import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
 const Saved = ({ navigation, route }) => {
   const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
   const city = route.params?.city || 'Івано-Франківськ';
-  const { data, categories, isLoading, error } = useCityData(city, language);
+  const { data, categories, isLoading, error, retry } = useCityData(city, language);
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
@@ -84,7 +85,7 @@ const Saved = ({ navigation, route }) => {
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (isLoading || !data || placesData.length === 0) {
+  if (isLoading || error || !data) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -94,11 +95,11 @@ const Saved = ({ navigation, route }) => {
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
         </View>
-        <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.text2 }]}>
-            {isLoading ? 'Завантаження…' : error ? 'Не вдалося завантажити місця.' : t.placesUnavailable}
-          </Text>
-        </View>
+        {isLoading ? (
+          <LoadingState message="Завантаження обраних місць…" theme={theme} />
+        ) : (
+          <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} />
+        )}
       </SafeAreaView>
     );
   }
@@ -129,32 +130,34 @@ const Saved = ({ navigation, route }) => {
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.title, { color: theme.text }]}>{t.places}</Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-            {categories.map((f) => (
-              <TouchableOpacity
-                key={f.id}
-                onPress={() => setPlacesFilter(f.id)}
-                style={[
-                  styles.filter,
-                  placesFilter === f.id
-                    ? { backgroundColor: theme.accent }
-                    : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={f.icon}
-                  size={20}
-                  color={placesFilter === f.id ? (isDarkMode ? '#000000' : '#ffffff') : theme.text}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {categories.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+              {categories.map((f) => (
+                <TouchableOpacity
+                  key={f.id}
+                  onPress={() => setPlacesFilter(f.id)}
+                  style={[
+                    styles.filter,
+                    placesFilter === f.id
+                      ? { backgroundColor: theme.accent }
+                      : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={f.icon}
+                    size={20}
+                    color={placesFilter === f.id ? (isDarkMode ? '#000000' : '#ffffff') : theme.text}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <EmptyState message="Категорії недоступні." theme={theme} framed={false} />
+          )}
         </View>
 
         {filteredFavorites.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-          </View>
+          <EmptyState message={likedPlaces.size === 0 ? t.noFavorites : t.placesUnavailable} theme={theme} />
         ) : (
           filteredFavorites.map((item, index) => (
             <Animated.View

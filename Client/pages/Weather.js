@@ -7,6 +7,7 @@ const WeatherWidget = ({ theme, t, selectedCity }) => {
   const [error, setError] = useState(null);
 
   const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
+  const weatherErrorMessage = 'Не вдалося завантажити погоду. Перевірте інтернет і спробуйте ще раз.';
 
   const fetchWeather = async () => {
     if (!API_KEY) {
@@ -34,7 +35,7 @@ const WeatherWidget = ({ theme, t, selectedCity }) => {
       });
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setError(weatherErrorMessage);
       setWeatherData(null);
     }
   };

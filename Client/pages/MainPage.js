@@ -18,6 +18,7 @@ import AccommodationWidget from './AccommodationWidget';
 import EventsWidget from './Events';
 import Donate from './Donate';
 import WeatherWidget from './Weather';
+import { ErrorState, LoadingState } from './components/StateViews';
 
 const Tab = createBottomTabNavigator();
 
@@ -48,7 +49,7 @@ export default function MainPage({ navigation, route }) {
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
-  const { data, categories, isLoading, error } = useCityData(selectedCity, language);
+  const { data, categories, isLoading, error, retry } = useCityData(selectedCity, language);
   const t = {
     history: language === 'uk' ? 'Історія' : 'History',
     places: language === 'uk' ? 'Місця' : 'Places',
@@ -81,10 +82,18 @@ export default function MainPage({ navigation, route }) {
   };
   const openPlaceDetails = (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity });
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
-        <Text style={{ color: theme.text2 }}>{error ? 'Не вдалося завантажити дані міста.' : 'Завантаження даних міста…'}</Text>
+        <LoadingState message="Завантаження даних міста…" theme={theme} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
+        <ErrorState message="Не вдалося завантажити дані міста." onRetry={retry} theme={theme} />
       </SafeAreaView>
     );
   }

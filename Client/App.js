@@ -20,6 +20,7 @@ import PlaceDetails from './pages/PlaceDetails';
 import Donate from './pages/Donate';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
+import { EmptyState, ErrorState, LoadingState } from './pages/components/StateViews';
 
 const Stack = createStackNavigator();
 
@@ -43,8 +44,15 @@ function CitySelectScreen({ navigation }) {
   const { language, setLanguage, isDarkMode, setIsDarkMode, theme } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
-  const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
+  const { cities, isLoading: isCitiesLoading, error: citiesError, retry: retryCities } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
+  const cityListEmpty = isCitiesLoading ? (
+    <LoadingState message="Завантаження міст…" theme={theme} />
+  ) : citiesError ? (
+    <ErrorState message="Не вдалося завантажити список міст." onRetry={retryCities} theme={theme} />
+  ) : (
+    <EmptyState message="Міст за цим пошуком не знайдено." theme={theme} />
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -83,6 +91,7 @@ function CitySelectScreen({ navigation }) {
         keyExtractor={(city) => city}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
         keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={cityListEmpty}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('Main', { city: item })}
@@ -94,11 +103,6 @@ function CitySelectScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
-      {isCitiesLoading || citiesError ? (
-        <Text style={[styles.cityText, { color: theme.text2, textAlign: 'center' }]}>
-          {isCitiesLoading ? 'Завантаження міст…' : 'Не вдалося завантажити список міст.'}
-        </Text>
-      ) : null}
 
       <Donate
         isVisible={isDonateVisible}

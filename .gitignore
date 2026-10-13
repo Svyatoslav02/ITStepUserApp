@@ -1,12 +1,20 @@
-# Dependencies
+# Dependencies and generated Expo output
 node_modules/
 **/node_modules/
-
-# Expo / React Native
 .expo/
 **/.expo/
 dist/
+**/dist/
 web-build/
+**/web-build/
+
+# Local environment variables; keep only the documented template in Git
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
 
 # Logs
 *.log

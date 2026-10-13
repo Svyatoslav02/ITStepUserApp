@@ -8,6 +8,10 @@ const categories = [
   { id: 'entertainment', icon: 'movie-open', uk: 'Розваги', en: 'Entertainment' },
 ];
 
+const cityCoordinates = {
+  'Івано-Франківськ': { latitude: 48.9226, longitude: 24.7111 },
+};
+
 const getLocalized = (section, language) => section?.[language] ?? section?.uk;
 
 export async function getCities() {
@@ -35,6 +39,7 @@ export async function getCityHistory(city, language = 'uk') {
 export async function getCityContent(city, language = 'uk') {
   const cityRecord = cityData[city];
   return {
+    coordinates: cityCoordinates[city] ?? null,
     weather: getLocalized(cityRecord?.weather, language) ?? null,
     accommodation: getLocalized(cityRecord?.accommodation, language) ?? [],
     events: getLocalized(cityRecord?.events, language) ?? [],

@@ -2,11 +2,13 @@ import React, { useContext } from 'react';
 import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather as Icon, MaterialCommunityIcons } from '@expo/vector-icons';
 import AppContext from '../AppContext';
+import { useTheme } from '../contexts/ThemeContext';
 import usePlace from '../services/usePlace';
 import { getSavedPlaceKey } from '../services/useSavedPlaces';
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, language, theme, selectedCity, savedPlaceKeys, toggleSavedPlace } = useContext(AppContext);
+  const { language, selectedCity, savedPlaceKeys, toggleSavedPlace } = useContext(AppContext);
+  const { theme } = useTheme();
   const { placeId } = route.params;
   const city = selectedCity || route.params.city;
   const { place, isLoading, error } = usePlace(city, placeId, language);
@@ -29,7 +31,7 @@ export default function PlaceDetails({ navigation, route }) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={theme.statusBarStyle} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Назад">
           <Icon name="chevron-left" size={24} color={theme.bannerText} />

@@ -12,13 +12,15 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
+import { useTheme } from '../contexts/ThemeContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { getSavedPlaceKey } from '../services/useSavedPlaces';
 import PlaceDistanceButton from '../components/PlaceDistanceButton';
 
 const Saved = ({ navigation }) => {
-  const { savedPlaceKeys, toggleSavedPlace, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const { savedPlaceKeys, toggleSavedPlace, language, selectedCity } = useContext(AppContext);
+  const { theme } = useTheme();
   const city = selectedCity;
   const { data, categories, isLoading, error } = useCityData(city, language);
   const placesData = data?.places || [];
@@ -82,7 +84,7 @@ const Saved = ({ navigation }) => {
   if (isLoading || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle={theme.statusBarStyle} />
         <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
@@ -103,7 +105,7 @@ const Saved = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={theme.statusBarStyle} />
       <View style={[styles.header, { backgroundColor: theme.bannerBackground }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
@@ -145,7 +147,7 @@ const Saved = ({ navigation }) => {
                 <MaterialCommunityIcons
                   name={f.icon}
                   size={20}
-                  color={placesFilter === f.id ? (isDarkMode ? '#000000' : '#ffffff') : theme.text}
+                  color={placesFilter === f.id ? theme.favBtnText : theme.text}
                 />
               </TouchableOpacity>
             ))}
@@ -182,10 +184,10 @@ const Saved = ({ navigation }) => {
                     place={item}
                     city={city}
                     language={language}
-                    style={styles.distanceAction}
+                    style={[styles.distanceAction, { backgroundColor: theme.banner }]}
                     textStyle={styles.distanceText}
                   />
-                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
+                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={[styles.distanceBlock, { backgroundColor: theme.banner }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
                       <Text style={styles.distanceText}>Google Maps</Text>
@@ -305,7 +307,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 10,
-    backgroundColor: '#1f1f1f',
   },
   distanceAction: {
     position: 'absolute',
@@ -316,7 +317,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
-    backgroundColor: '#1f1f1f',
   },
   distanceContent: { flexDirection: 'row', alignItems: 'center' },
   distanceText: {

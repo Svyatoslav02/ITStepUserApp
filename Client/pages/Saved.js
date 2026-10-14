@@ -15,6 +15,7 @@ import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { getSavedPlaceKey } from '../services/useSavedPlaces';
+import PlaceDistanceButton from '../components/PlaceDistanceButton';
 
 const Saved = ({ navigation }) => {
   const { savedPlaceKeys, toggleSavedPlace, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
@@ -177,6 +178,13 @@ const Saved = ({ navigation }) => {
                       color={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
+                  <PlaceDistanceButton
+                    place={item}
+                    city={city}
+                    language={language}
+                    style={styles.distanceAction}
+                    textStyle={styles.distanceText}
+                  />
                   <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
@@ -295,6 +303,17 @@ const styles = StyleSheet.create({
     bottom: 25,
     right: 10,
     paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#1f1f1f',
+  },
+  distanceAction: {
+    position: 'absolute',
+    bottom: 25,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
     backgroundColor: '#1f1f1f',

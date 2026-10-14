@@ -10,7 +10,8 @@ import {
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { getSavedPlaceKey } from '../services/useSavedPlaces';
-const PlaceCard = memo(({ place, city, isSaved, toggleSaved, theme, onPlacePress }) => {
+import PlaceDistanceButton from '../components/PlaceDistanceButton';
+const PlaceCard = memo(({ place, city, language, isSaved, toggleSaved, theme, onPlacePress }) => {
   return (
     <View style={[s.card, { backgroundColor: theme.card }]}>
       <View style={s.imageContainer}>
@@ -47,7 +48,13 @@ const PlaceCard = memo(({ place, city, isSaved, toggleSaved, theme, onPlacePress
           <Text style={[s.likeCount, { color: theme.text2 }]}>{place.likes}</Text>
         </TouchableOpacity>
 
-        {/* Блок "200м від вас" */}
+        <PlaceDistanceButton
+          place={place}
+          city={city}
+          language={language}
+          style={s.distanceAction}
+          textStyle={s.distanceText}
+        />
         <TouchableOpacity
           onPress={() => openPlaceInMaps(place, city)}
           accessibilityRole="button"
@@ -84,7 +91,7 @@ const PlaceCard = memo(({ place, city, isSaved, toggleSaved, theme, onPlacePress
   );
 });
 
-const PlacesWidget = memo(({ data, theme, t, savedPlaceKeys, toggleSaved, placesFilter, setPlacesFilter, onPlacePress, categories, city }) => {
+const PlacesWidget = memo(({ data, theme, t, savedPlaceKeys, toggleSaved, placesFilter, setPlacesFilter, onPlacePress, categories, city, language }) => {
   const filtered = data.places?.filter((p) => p.type === placesFilter) || [];
 
   return (
@@ -123,6 +130,7 @@ const PlacesWidget = memo(({ data, theme, t, savedPlaceKeys, toggleSaved, places
             key={p.id}
             place={p}
             city={city}
+            language={language}
             isSaved={savedPlaceKeys.has(getSavedPlaceKey(city, p.id))}
             toggleSaved={toggleSaved}
             theme={theme}
@@ -188,6 +196,17 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     backgroundColor: '#ffffff00',
+  },
+  distanceAction: {
+    position: 'absolute',
+    bottom: 25,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#1f1f1f',
   },
   distanceContent: {
     flexDirection: 'row',

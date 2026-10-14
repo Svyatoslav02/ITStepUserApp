@@ -144,6 +144,7 @@ export default function MainPage({ navigation }) {
               setPlacesFilter={setPlacesFilter}
               onPlacePress={openPlaceDetails}
               city={selectedCity}
+              language={language}
               categories={categories}
             />
           )}

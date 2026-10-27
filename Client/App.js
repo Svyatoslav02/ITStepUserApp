@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Platform,
   SafeAreaView,
@@ -19,8 +20,11 @@ import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getCities } from './services/cityService';
 
 const Stack = createStackNavigator();
+const SELECTED_CITY_KEY = 'selectedCity';
 
 const makeTheme = (isDarkMode) => ({
   bg: isDarkMode ? '#121212' : '#f0f4f8',
@@ -39,7 +43,7 @@ const makeTheme = (isDarkMode) => ({
 });
 
 function CitySelectScreen({ navigation }) {
-  const { language, setLanguage, isDarkMode, setIsDarkMode, theme } = React.useContext(AppContext);
+  const { language, setLanguage, isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -80,7 +84,10 @@ function CitySelectScreen({ navigation }) {
         keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => navigation.navigate('Main', { city: item })}
+            onPress={async () => {
+              await setSelectedCity(item);
+              navigation.reset({ index: 0, routes: [{ name: 'Main', params: { city: item } }] });
+            }}
             style={[styles.cityItem, { backgroundColor: theme.card }]}
             activeOpacity={0.7}
           >
@@ -103,6 +110,23 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [language, setLanguage] = useState('uk');
   const [likedPlaces, setLikedPlaces] = useState(new Set());
+  const [selectedCity, setSelectedCityState] = useState(null);
+  const [isCityReady, setIsCityReady] = useState(false);
+  useEffect(() => {
+    let isActive = true;
+    Promise.all([AsyncStorage.getItem(SELECTED_CITY_KEY), getCities()])
+      .then(([storedCity, cities]) => {
+        if (!isActive) return;
+        setSelectedCityState(cities.includes(storedCity) ? storedCity : null);
+        setIsCityReady(true);
+      })
+      .catch(() => { if (isActive) setIsCityReady(true); });
+    return () => { isActive = false; };
+  }, []);
+  const setSelectedCity = useCallback(async (city) => {
+    await AsyncStorage.setItem(SELECTED_CITY_KEY, city);
+    setSelectedCityState(city);
+  }, []);
   const theme = useMemo(() => makeTheme(isDarkMode), [isDarkMode]);
   const contextValue = useMemo(() => ({
     isDarkMode,
@@ -111,25 +135,32 @@ export default function App() {
     setLanguage,
     likedPlaces,
     setLikedPlaces,
+    selectedCity,
+    setSelectedCity,
     theme,
-  }), [isDarkMode, language, likedPlaces, theme]);
+  }), [isDarkMode, language, likedPlaces, selectedCity, setSelectedCity, theme]);
 
   return (
     <AppContext.Provider value={contextValue}>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="CitySelect" component={CitySelectScreen} />
-          <Stack.Screen name="Main" component={MainPage} />
-          <Stack.Screen name="Saved" component={Saved} />
-          <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      {!isCityReady ? (
+        <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
+      ) : (
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName={selectedCity ? 'Main' : 'CitySelect'} screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="CitySelect" component={CitySelectScreen} />
+            <Stack.Screen name="Main" component={MainPage} initialParams={{ city: selectedCity }} />
+            <Stack.Screen name="Saved" component={Saved} />
+            <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      )}
     </AppContext.Provider>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loading: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

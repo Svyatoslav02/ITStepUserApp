@@ -18,9 +18,9 @@ import { getSavedPlaceKey } from '../services/useSavedPlaces';
 import PlaceDistanceButton from '../components/PlaceDistanceButton';
 
 const Saved = ({ navigation }) => {
-  const { savedPlaceKeys, toggleSavedPlace, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const { savedPlaceKeys, toggleSavedPlace, isDarkMode, theme, selectedCity } = useContext(AppContext);
   const city = selectedCity;
-  const { data, categories, isLoading, error } = useCityData(city, language);
+  const { data, categories, isLoading, error } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
@@ -39,7 +39,7 @@ const Saved = ({ navigation }) => {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     sport: 'Спорт',
-    changeCity: language === 'uk' ? 'Змінити місто' : 'Change city',
+    changeCity: 'Змінити місто',
   };
 
   const filteredFavorites = useMemo(
@@ -181,7 +181,7 @@ const Saved = ({ navigation }) => {
                   <PlaceDistanceButton
                     place={item}
                     city={city}
-                    language={language}
+                    language="uk"
                     style={styles.distanceAction}
                     textStyle={styles.distanceText}
                   />

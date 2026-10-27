@@ -16,10 +16,10 @@ const getDisplayLines = (value) => {
 };
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, language, theme, selectedCity } = useContext(AppContext);
+  const { isDarkMode, theme, selectedCity } = useContext(AppContext);
   const { placeId } = route.params;
   const city = selectedCity || route.params.city;
-  const { place, isLoading, error } = usePlace(city, placeId, language);
+  const { place, isLoading, error } = usePlace(city, placeId, 'uk');
 
   if (isLoading || !place) {
     return (
@@ -28,7 +28,7 @@ export default function PlaceDetails({ navigation, route }) {
           <Icon name="chevron-left" size={24} color={theme.bannerText} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
-          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>Змінити місто</Text>
         </TouchableOpacity>
         <Text style={[styles.body, { color: theme.text2 }]}>
           {isLoading ? 'Завантаження місця…' : error ? 'Не вдалося завантажити місце.' : 'Місце не знайдено.'}
@@ -46,7 +46,7 @@ export default function PlaceDetails({ navigation, route }) {
         </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{place.name || 'Місце без назви'}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
-          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>Змінити місто</Text>
         </TouchableOpacity>
       </View>
 

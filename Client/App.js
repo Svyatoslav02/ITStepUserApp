@@ -43,7 +43,7 @@ const makeTheme = (isDarkMode) => ({
 });
 
 function CitySelectScreen({ navigation }) {
-  const { language, setLanguage, isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -54,9 +54,6 @@ function CitySelectScreen({ navigation }) {
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>Оберіть місто</Text>
         <View style={styles.controls}>
-          <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')} style={styles.lang}>
-            <Text style={{ color: theme.bannerText, fontWeight: '700' }}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconBtn}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
           </TouchableOpacity>
@@ -108,7 +105,6 @@ function CitySelectScreen({ navigation }) {
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState('uk');
   const [likedPlaces, setLikedPlaces] = useState(new Set());
   const [selectedCity, setSelectedCityState] = useState(null);
   const [isCityReady, setIsCityReady] = useState(false);
@@ -131,14 +127,12 @@ export default function App() {
   const contextValue = useMemo(() => ({
     isDarkMode,
     setIsDarkMode,
-    language,
-    setLanguage,
     likedPlaces,
     setLikedPlaces,
     selectedCity,
     setSelectedCity,
     theme,
-  }), [isDarkMode, language, likedPlaces, selectedCity, setSelectedCity, theme]);
+  }), [isDarkMode, likedPlaces, selectedCity, setSelectedCity, theme]);
 
   return (
     <AppContext.Provider value={contextValue}>
@@ -175,7 +169,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 20, fontWeight: '700', letterSpacing: 0.6 },
   controls: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' },
-  lang: { marginRight: 12, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, borderWidth: 1, borderColor: '#777' },
   iconBtn: { padding: 8, alignItems: 'center', justifyContent: 'center' },
   searchContainer: {
     flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginVertical: 16,

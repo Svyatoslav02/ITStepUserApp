@@ -17,9 +17,9 @@ import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
 const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, selectedCity, theme } = useContext(AppContext);
+  const { likedPlaces, setLikedPlaces, isDarkMode, selectedCity, theme } = useContext(AppContext);
   const city = route.params?.city || selectedCity || 'Івано-Франківськ';
-  const { data, categories, isLoading, error, retry } = useCityData(city, language);
+  const { data, categories, isLoading, error, retry } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
@@ -38,7 +38,7 @@ const Saved = ({ navigation, route }) => {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     sport: 'Спорт',
-    changeCity: language === 'uk' ? 'Змінити місто' : 'Change city',
+    changeCity: 'Змінити місто',
   };
 
   const toggleLike = (id) => {

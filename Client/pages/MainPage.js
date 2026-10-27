@@ -103,30 +103,30 @@ const CityTabs = memo(() => {
 });
 
 export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
-  const { data, categories, isLoading, error, retry } = useCityData(selectedCity, language);
+  const { data, categories, isLoading, error, retry } = useCityData(selectedCity, 'uk');
   const t = useMemo(() => ({
-    history: language === 'uk' ? 'Історія' : 'History',
-    places: language === 'uk' ? 'Місця' : 'Places',
-    favoritesButton: language === 'uk' ? 'Обрані місця' : 'Saved places',
-    weather: language === 'uk' ? 'Погода' : 'Weather',
-    currentWeather: language === 'uk' ? 'Поточна погода' : 'Current weather',
-    temperature: language === 'uk' ? 'Температура' : 'Temperature',
-    humidity: language === 'uk' ? 'Вологість' : 'Humidity',
-    wind: language === 'uk' ? 'Вітер' : 'Wind',
-    food: language === 'uk' ? 'Їжа' : 'Food',
-    culture: language === 'uk' ? 'Культура' : 'Culture',
-    nature: language === 'uk' ? 'Природа' : 'Nature',
-    shopping: language === 'uk' ? 'Шопінг' : 'Shopping',
-    entertainment: language === 'uk' ? 'Розваги' : 'Entertainment',
-    unavailable: language === 'uk' ? 'недоступна' : 'unavailable',
-    placesUnavailable: language === 'uk' ? 'Місця недоступні' : 'Places unavailable',
-    rating: language === 'uk' ? 'Рейтинг' : 'Rating',
-    address: language === 'uk' ? 'Адреса' : 'Address',
-    description: language === 'uk' ? 'Опис' : 'Description',
-  }), [language]);
+    history: 'Історія',
+    places: 'Місця',
+    favoritesButton: 'Обрані місця',
+    weather: 'Погода',
+    currentWeather: 'Поточна погода',
+    temperature: 'Температура',
+    humidity: 'Вологість',
+    wind: 'Вітер',
+    food: 'Їжа',
+    culture: 'Культура',
+    nature: 'Природа',
+    shopping: 'Шопінг',
+    entertainment: 'Розваги',
+    unavailable: 'недоступна',
+    placesUnavailable: 'Місця недоступні',
+    rating: 'Рейтинг',
+    address: 'Адреса',
+    description: 'Опис',
+  }), []);
 
   const toggleLike = useCallback((id) => {
     setLikedPlaces((current) => {
@@ -190,10 +190,7 @@ export default function MainPage({ navigation, route }) {
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>
           <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
-            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
-            <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>Змінити місто</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconButton}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
@@ -230,7 +227,6 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center' },
   changeCityButton: { paddingVertical: 6, paddingHorizontal: 8 },
   changeCityText: { fontSize: 13, fontWeight: '700' },
-  lang: { fontSize: 14, fontWeight: '700', padding: 8 },
   favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
   favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
   favoritesText: { fontSize: 15, fontWeight: '700' },

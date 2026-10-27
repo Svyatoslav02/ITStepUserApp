@@ -15,9 +15,9 @@ import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
-const Saved = ({ navigation }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme, selectedCity } = useContext(AppContext);
-  const city = selectedCity;
+const Saved = ({ navigation, route }) => {
+  const { likedPlaces, setLikedPlaces, language, isDarkMode, selectedCity, theme } = useContext(AppContext);
+  const city = route.params?.city || selectedCity || 'Івано-Франківськ';
   const { data, categories, isLoading, error } = useCityData(city, language);
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
@@ -240,9 +240,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
+  changeCityButton: { marginLeft: 'auto', paddingVertical: 6, paddingHorizontal: 8 },
+  changeCityText: { fontSize: 13, fontWeight: '700' },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
-  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
-  changeCityText: { fontSize: 11, fontWeight: '700' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {
     padding: 18,

@@ -3,6 +3,7 @@ import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, Touchable
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import usePlace from '../services/usePlace';
+import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
 const getDisplayLines = (value) => {
   if (typeof value === 'string') return value.trim() ? [value.trim()] : [];
@@ -19,9 +20,9 @@ export default function PlaceDetails({ navigation, route }) {
   const { isDarkMode, theme, selectedCity } = useContext(AppContext);
   const { placeId } = route.params;
   const city = selectedCity || route.params.city;
-  const { place, isLoading, error } = usePlace(city, placeId, 'uk');
+  const { place, isLoading, error, retry } = usePlace(city, placeId, 'uk');
 
-  if (isLoading || !place) {
+  if (isLoading || error || !place) {
     return (
       <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Назад">
@@ -30,9 +31,17 @@ export default function PlaceDetails({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
           <Text style={[styles.changeCityText, { color: theme.bannerText }]}>Змінити місто</Text>
         </TouchableOpacity>
-        <Text style={[styles.body, { color: theme.text2 }]}>
-          {isLoading ? 'Завантаження місця…' : error ? 'Не вдалося завантажити місце.' : 'Місце не знайдено.'}
-        </Text>
+        {isLoading ? <LoadingState message="Завантаження місця…" theme={theme} /> : null}
+        {!isLoading && error ? (
+          <ErrorState
+            message="Не вдалося завантажити місце. Перевірте інтернет-з’єднання."
+            onRetry={retry}
+            theme={theme}
+          />
+        ) : null}
+        {!isLoading && !error && !place ? (
+          <EmptyState message="Це місце більше недоступне." theme={theme} />
+        ) : null}
       </SafeAreaView>
     );
   }

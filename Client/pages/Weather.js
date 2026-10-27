@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather as Icon } from '@expo/vector-icons';
+import { ErrorState, LoadingState } from './components/StateViews';
 
 const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
 const UPDATE_INTERVAL_MS = 30 * 60 * 1000;
@@ -65,18 +66,29 @@ const toWeatherViewModel = (data) => {
 const WeatherWidget = ({ theme, t, coordinates }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const retry = useCallback(() => {
+    setWeatherData(null);
+    setError(null);
+    setIsLoading(true);
+    setRetryKey((key) => key + 1);
+  }, []);
 
   const fetchWeather = useCallback(async (signal) => {
     if (!API_KEY) {
       setWeatherData(null);
-      setError('Додайте EXPO_PUBLIC_OPENWEATHER_API_KEY у Client/.env');
+      setError('Прогноз погоди тимчасово недоступний.');
+      setIsLoading(false);
       return;
     }
 
     const hasCoordinates = coordinates && isValidCoordinate(coordinates.latitude) && isValidCoordinate(coordinates.longitude);
     if (!hasCoordinates) {
       setWeatherData(null);
-      setError('Для цього міста не вказані координати');
+      setError('Для цього міста поки немає прогнозу погоди.');
+      setIsLoading(false);
       return;
     }
 
@@ -90,10 +102,12 @@ const WeatherWidget = ({ theme, t, coordinates }) => {
 
       setWeatherData(toWeatherViewModel(data));
       setError(null);
+      setIsLoading(false);
     } catch (err) {
       if (err.name === 'AbortError') return;
       setWeatherData(null);
-      setError(err.message || 'Не вдалося отримати дані про погоду');
+      setError('Не вдалося завантажити погоду. Перевірте інтернет-з’єднання.');
+      setIsLoading(false);
     }
   }, [coordinates]);
 
@@ -109,20 +123,18 @@ const WeatherWidget = ({ theme, t, coordinates }) => {
       controller.abort();
       clearInterval(intervalId);
     };
-  }, [fetchWeather]);
+  }, [fetchWeather, retryKey]);
 
+  const canRetry = Boolean(API_KEY && coordinates && isValidCoordinate(coordinates.latitude) && isValidCoordinate(coordinates.longitude));
+
+  if (isLoading) return <LoadingState message="Завантаження погоди…" theme={theme} />;
   if (error || !weatherData) {
     return (
-      <View style={[s.weatherContainer, { backgroundColor: theme.card }]}>
-        <Text style={[s.weatherTitle, s.errorTitle, { color: theme.text }]}>
-          {t.weather} {t.unavailable}
-        </Text>
-        {error ? (
-          <Text style={[s.errorText, { color: theme.text2 }]}>
-            {error}
-          </Text>
-        ) : null}
-      </View>
+      <ErrorState
+        message={error || `${t.weather} ${t.unavailable}.`}
+        onRetry={canRetry ? retry : undefined}
+        theme={theme}
+      />
     );
   }
 
@@ -165,12 +177,10 @@ const s = StyleSheet.create({
   },
   weatherHeader: { flexDirection: 'row', marginBottom: 18 },
   weatherTitle: { fontSize: 22, fontWeight: '700', marginLeft: 10, lineHeight: 32 },
-  errorTitle: { marginLeft: 0 },
   weatherDetails: { borderTopWidth: 1, borderTopColor: '#333', paddingTop: 14 },
   weatherRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
   weatherLabel: { fontSize: 16, fontWeight: '600' },
   weatherValue: { fontSize: 16, fontWeight: '700' },
-  errorText: { fontSize: 16, fontWeight: '500', marginTop: 8 },
 });
 
 export default WeatherWidget;

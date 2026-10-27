@@ -14,23 +14,25 @@ import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
 const Saved = ({ navigation, route }) => {
   const { likedPlaces, setLikedPlaces, isDarkMode, selectedCity, theme } = useContext(AppContext);
   const city = route.params?.city || selectedCity || 'Івано-Франківськ';
-  const { data, categories, isLoading, error } = useCityData(city, 'uk');
+  const { data, categories, isLoading, error, retry } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 
   const t = {
     favorites: 'Обрані місця',
+    noFavorites: 'У цій категорії немає обраних місць.',
     noFavorites: 'Немає обраних місць',
     back: 'Назад',
     rating: 'Рейтинг',
     address: 'Адреса',
     places: 'Місця',
-    placesUnavailable: 'Місця недоступні',
+    noPlaces: 'У цьому місті поки немає місць.',
     food: 'Їжа',
     culture: 'Культура',
     nature: 'Природа',
@@ -85,7 +87,7 @@ const Saved = ({ navigation, route }) => {
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (isLoading || !data || placesData.length === 0) {
+  if (isLoading || error || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -98,11 +100,17 @@ const Saved = ({ navigation, route }) => {
             <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.text2 }]}>
-            {isLoading ? 'Завантаження…' : error ? 'Не вдалося завантажити місця.' : t.placesUnavailable}
-          </Text>
-        </View>
+        {isLoading ? <LoadingState message="Завантаження обраних місць…" theme={theme} /> : null}
+        {!isLoading && (error || !data) ? (
+          <ErrorState
+            message="Не вдалося завантажити обрані місця. Перевірте інтернет-з’єднання."
+            onRetry={retry}
+            theme={theme}
+          />
+        ) : null}
+        {!isLoading && !error && data && placesData.length === 0 ? (
+          <EmptyState message={t.noPlaces} theme={theme} framed={false} />
+        ) : null}
       </SafeAreaView>
     );
   }
@@ -159,9 +167,7 @@ const Saved = ({ navigation, route }) => {
         </View>
 
         {filteredFavorites.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-          </View>
+          <EmptyState message={t.noFavorites} theme={theme} framed={false} />
         ) : (
           filteredFavorites.map((item, index) => (
             <Animated.View
@@ -302,8 +308,6 @@ const styles = StyleSheet.create({
   detail: { fontSize: 15, fontWeight: '500' },
   rating: { flexDirection: 'row', alignItems: 'center', marginLeft: 14 },
   icon: { marginRight: 6 },
-  empty: { padding: 28, alignItems: 'center' },
-  emptyText: { fontSize: 16, fontWeight: '600' },
   distanceBlock: {
     position: 'absolute',
     bottom: 25,

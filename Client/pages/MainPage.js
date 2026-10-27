@@ -18,6 +18,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
+import { ErrorState, LoadingState } from './components/StateViews';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
 import WeatherWidget from './Weather';
@@ -105,10 +106,11 @@ export default function MainPage({ navigation, route }) {
   const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
-  const { data, categories, isLoading, error } = useCityData(selectedCity, 'uk');
+  const { data, categories, isLoading, error, retry } = useCityData(selectedCity, 'uk');
   const t = useMemo(() => ({
     history: 'Історія',
     places: 'Місця',
+    emptyPlaces: 'За цим фільтром місць поки немає.',
     favoritesButton: 'Обрані місця',
     weather: 'Погода',
     currentWeather: 'Поточна погода',
@@ -121,7 +123,6 @@ export default function MainPage({ navigation, route }) {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     unavailable: 'недоступна',
-    placesUnavailable: 'Місця недоступні',
     rating: 'Рейтинг',
     address: 'Адреса',
     description: 'Опис',
@@ -163,10 +164,22 @@ export default function MainPage({ navigation, route }) {
     toggleLike,
   ]);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
-        <Text style={{ color: theme.text2 }}>{error ? 'Не вдалося завантажити дані міста.' : 'Завантаження даних міста…'}</Text>
+        <LoadingState message="Завантаження даних міста…" theme={theme} />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
+        <ErrorState
+          message="Не вдалося завантажити дані міста. Перевірте інтернет-з’єднання."
+          onRetry={retry}
+          theme={theme}
+        />
       </SafeAreaView>
     );
   }

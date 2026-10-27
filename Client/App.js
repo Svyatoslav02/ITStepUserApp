@@ -51,7 +51,11 @@ function CitySelectScreen({ navigation }) {
   const cityListEmpty = isCitiesLoading ? (
     <LoadingState message="Завантаження міст…" theme={theme} />
   ) : citiesError ? (
-    <ErrorState message="Не вдалося завантажити список міст." onRetry={retryCities} theme={theme} />
+    <ErrorState
+      message="Не вдалося завантажити список міст. Перевірте інтернет-з’єднання."
+      onRetry={retryCities}
+      theme={theme}
+    />
   ) : (
     <EmptyState message="Міст за цим пошуком не знайдено." theme={theme} />
   );

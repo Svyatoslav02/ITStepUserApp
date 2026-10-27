@@ -26,12 +26,13 @@ const Saved = ({ navigation, route }) => {
 
   const t = {
     favorites: 'Обрані місця',
+    noFavorites: 'У цій категорії немає обраних місць.',
     noFavorites: 'Немає обраних місць',
     back: 'Назад',
     rating: 'Рейтинг',
     address: 'Адреса',
     places: 'Місця',
-    placesUnavailable: 'Місця недоступні',
+    noPlaces: 'У цьому місті поки немає місць.',
     food: 'Їжа',
     culture: 'Культура',
     nature: 'Природа',
@@ -52,7 +53,7 @@ const Saved = ({ navigation, route }) => {
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => likedPlaces.has(place.id) && place.type === placesFilter)
+        ? placesData.filter((place) => likedPlaces.has(place.id) && place.category === placesFilter)
         : [],
     [placesData, likedPlaces, placesFilter]
   );
@@ -99,10 +100,17 @@ const Saved = ({ navigation, route }) => {
             <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
           </TouchableOpacity>
         </View>
-        {isLoading ? <LoadingState message="Завантаження місць…" theme={theme} /> : null}
-        {!isLoading && error ? <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} /> : null}
-        {!isLoading && !error && !data ? <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} /> : null}
-        {!isLoading && !error && data && placesData.length === 0 ? <EmptyState message={t.placesUnavailable} theme={theme} framed={false} /> : null}
+        {isLoading ? <LoadingState message="Завантаження обраних місць…" theme={theme} /> : null}
+        {!isLoading && (error || !data) ? (
+          <ErrorState
+            message="Не вдалося завантажити обрані місця. Перевірте інтернет-з’єднання."
+            onRetry={retry}
+            theme={theme}
+          />
+        ) : null}
+        {!isLoading && !error && data && placesData.length === 0 ? (
+          <EmptyState message={t.noPlaces} theme={theme} framed={false} />
+        ) : null}
       </SafeAreaView>
     );
   }
@@ -159,7 +167,7 @@ const Saved = ({ navigation, route }) => {
         </View>
 
         {filteredFavorites.length === 0 ? (
-          <EmptyState message={t.placesUnavailable} theme={theme} framed={false} />
+          <EmptyState message={t.noFavorites} theme={theme} framed={false} />
         ) : (
           filteredFavorites.map((item, index) => (
             <Animated.View
@@ -171,8 +179,8 @@ const Saved = ({ navigation, route }) => {
             >
               <View style={[styles.card, { backgroundColor: theme.card }]}>
                 <View style={styles.imageContainer}>
-                  {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
-                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
+                  {item.photos?.[0] ? <Image source={{ uri: item.photos[0] }} style={styles.image} /> : null}
+                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name || 'Місце без назви'}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
@@ -182,7 +190,7 @@ const Saved = ({ navigation, route }) => {
                       color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
+                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name || 'місце'} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
                       <Text style={styles.distanceText}>Google Maps</Text>
@@ -192,26 +200,33 @@ const Saved = ({ navigation, route }) => {
                 <View style={styles.content}>
                   <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { placeId: item.id, city })} activeOpacity={0.7}>
                     <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-                      {item.name}
+                      {item.name || 'Місце без назви'}
                     </Text>
                   </TouchableOpacity>
                   {item.description && (
                     <Text style={[styles.desc, { color: theme.text2 }]}>{item.description}</Text>
                   )}
-                  <View style={styles.row}>
-                    <Icon name="map-pin" size={18} color={theme.text2} style={styles.icon} />
-                    <Text
-                      style={[styles.detail, { color: theme.text2, flex: 1 }]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {item.address}
-                    </Text>
-                    <View style={styles.rating}>
-                      <Icon name="star" size={18} color="#fbbf24" style={styles.icon} />
-                      <Text style={[styles.detail, { color: theme.text2 }]}>{item.rating.toFixed(1)}</Text>
+                  {(item.address || Number.isFinite(item.rating) || Number.isFinite(item.reviewCount)) ? (
+                    <View style={styles.row}>
+                      {item.address ? (
+                        <>
+                          <Icon name="map-pin" size={18} color={theme.text2} style={styles.icon} />
+                          <Text style={[styles.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                            {item.address}
+                          </Text>
+                        </>
+                      ) : null}
+                      {Number.isFinite(item.rating) ? (
+                        <View style={styles.rating}>
+                          <Icon name="star" size={18} color="#fbbf24" style={styles.icon} />
+                          <Text style={[styles.detail, { color: theme.text2 }]}>{item.rating.toFixed(1)}</Text>
+                        </View>
+                      ) : null}
+                      {Number.isFinite(item.reviewCount) ? (
+                        <Text style={[styles.detail, { color: theme.text2 }]}>{item.reviewCount} відгуків</Text>
+                      ) : null}
                     </View>
-                  </View>
+                  ) : null}
                 </View>
               </View>
             </Animated.View>
@@ -293,8 +308,6 @@ const styles = StyleSheet.create({
   detail: { fontSize: 15, fontWeight: '500' },
   rating: { flexDirection: 'row', alignItems: 'center', marginLeft: 14 },
   icon: { marginRight: 6 },
-  empty: { padding: 28, alignItems: 'center' },
-  emptyText: { fontSize: 16, fontWeight: '600' },
   distanceBlock: {
     position: 'absolute',
     bottom: 25,

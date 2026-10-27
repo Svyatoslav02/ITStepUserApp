@@ -9,6 +9,10 @@ const categories = [
   { id: 'hotels', icon: 'bed', uk: 'Готелі', en: 'Hotels' },
 ];
 
+const cityCoordinates = {
+  'Івано-Франківськ': { latitude: 48.9226, longitude: 24.7111 },
+};
+
 const getLocalized = (section, language) => section?.[language] ?? section?.uk;
 
 export async function getCities() {
@@ -26,7 +30,16 @@ export async function getPlaces(city, language = 'uk') {
 
   return [
     ...places,
-    ...hotels.map((hotel) => ({ ...hotel, name: hotel.title, type: 'hotels', likes: hotel.likes ?? 0 })),
+    ...hotels.map((hotel) => ({
+      ...hotel,
+      name: hotel.name || hotel.title || 'Місце без назви',
+      category: 'hotels',
+      photos: hotel.photos || (hotel.image ? [hotel.image] : []),
+      reviewCount: hotel.reviewCount ?? hotel.reviews?.length ?? 0,
+      coordinates: hotel.coordinates ?? null,
+      contacts: hotel.contacts ?? null,
+      workingHours: hotel.workingHours ?? null,
+    })),
   ];
 }
 
@@ -42,6 +55,7 @@ export async function getCityHistory(city, language = 'uk') {
 export async function getCityContent(city, language = 'uk') {
   const cityRecord = cityData[city];
   return {
+    coordinates: cityCoordinates[city] ?? null,
     weather: getLocalized(cityRecord?.weather, language) ?? null,
   };
 }

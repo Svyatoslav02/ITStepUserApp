@@ -16,7 +16,12 @@ export function LoadingState({ message = 'Завантаження…', theme })
   );
 }
 
-export function ErrorState({ message = 'Щось пішло не так.', onRetry, retryLabel = 'Спробувати ще', theme }) {
+export function ErrorState({
+  message = 'Не вдалося завантажити дані. Перевірте інтернет-з’єднання та спробуйте ще раз.',
+  onRetry,
+  retryLabel = 'Повторити',
+  theme,
+}) {
   return (
     <View style={[styles.state, styles.card, { backgroundColor: theme.card }]}>
       <Text style={[styles.title, { color: theme.text }]}>{message}</Text>

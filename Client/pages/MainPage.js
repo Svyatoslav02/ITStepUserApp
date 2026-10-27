@@ -110,6 +110,7 @@ export default function MainPage({ navigation, route }) {
   const t = useMemo(() => ({
     history: 'Історія',
     places: 'Місця',
+    emptyPlaces: 'За цим фільтром місць поки немає.',
     favoritesButton: 'Обрані місця',
     weather: 'Погода',
     currentWeather: 'Поточна погода',
@@ -122,7 +123,6 @@ export default function MainPage({ navigation, route }) {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     unavailable: 'недоступна',
-    placesUnavailable: 'Місця недоступні',
     rating: 'Рейтинг',
     address: 'Адреса',
     description: 'Опис',
@@ -175,7 +175,11 @@ export default function MainPage({ navigation, route }) {
   if (error || !data) {
     return (
       <SafeAreaView style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}>
-        <ErrorState message="Не вдалося завантажити дані міста." onRetry={retry} theme={theme} />
+        <ErrorState
+          message="Не вдалося завантажити дані міста. Перевірте інтернет-з’єднання."
+          onRetry={retry}
+          theme={theme}
+        />
       </SafeAreaView>
     );
   }
@@ -198,7 +202,7 @@ export default function MainPage({ navigation, route }) {
         </View>
       </View>
 
-      <WeatherWidget data={data} theme={theme} t={t} selectedCity={selectedCity} />
+      <WeatherWidget coordinates={data.coordinates} theme={theme} t={t} />
 
       <View style={styles.favoritesRow}>
         <TouchableOpacity

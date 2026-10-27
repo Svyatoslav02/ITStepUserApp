@@ -6,6 +6,7 @@ const categories = [
   { id: 'nature', icon: 'tree', uk: 'Природа', en: 'Nature' },
   { id: 'shopping', icon: 'shopping', uk: 'Шопінг', en: 'Shopping' },
   { id: 'entertainment', icon: 'movie-open', uk: 'Розваги', en: 'Entertainment' },
+  { id: 'hotels', icon: 'bed', uk: 'Готелі', en: 'Hotels' },
 ];
 
 const getLocalized = (section, language) => section?.[language] ?? section?.uk;
@@ -19,7 +20,23 @@ export async function getCategories(language = 'uk') {
 }
 
 export async function getPlaces(city, language = 'uk') {
-  return getLocalized(cityData[city]?.places, language) ?? [];
+  const cityRecord = cityData[city];
+  const places = getLocalized(cityRecord?.places, language) ?? [];
+  const hotels = getLocalized(cityRecord?.hotels, language) ?? [];
+
+  return [
+    ...places,
+    ...hotels.map((hotel) => ({
+      ...hotel,
+      name: hotel.name || hotel.title || 'Місце без назви',
+      category: 'hotels',
+      photos: hotel.photos || (hotel.image ? [hotel.image] : []),
+      reviewCount: hotel.reviewCount ?? hotel.reviews?.length ?? 0,
+      coordinates: hotel.coordinates ?? null,
+      contacts: hotel.contacts ?? null,
+      workingHours: hotel.workingHours ?? null,
+    })),
+  ];
 }
 
 export async function getPlace(city, placeId, language = 'uk') {
@@ -31,12 +48,9 @@ export async function getCityHistory(city, language = 'uk') {
   return getLocalized(cityData[city]?.history, language) ?? [];
 }
 
-// Additional city sections are returned through the same service boundary too.
 export async function getCityContent(city, language = 'uk') {
   const cityRecord = cityData[city];
   return {
     weather: getLocalized(cityRecord?.weather, language) ?? null,
-    accommodation: getLocalized(cityRecord?.accommodation, language) ?? [],
-    events: getLocalized(cityRecord?.events, language) ?? [],
   };
 }

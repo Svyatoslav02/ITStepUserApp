@@ -20,9 +20,6 @@ import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
-import AccommodationScreen from './screens/AccommodationScreen';
-import EventsScreen from './screens/EventsScreen';
-import Donate from './Donate';
 import WeatherWidget from './Weather';
 
 const Tab = createBottomTabNavigator();
@@ -80,42 +77,6 @@ const PlacesTabScreen = memo(() => {
   );
 });
 
-const AccommodationTabScreen = memo(() => {
-  const {
-    accommodationFilter,
-    data,
-    selectedCity,
-    setAccommodationFilter,
-    theme,
-    t,
-  } = useCityTabs();
-
-  return (
-    <AccommodationScreen
-      accommodation={data.accommodation}
-      city={selectedCity}
-      onFilterChange={setAccommodationFilter}
-      selectedFilter={accommodationFilter}
-      theme={theme}
-      t={t}
-    />
-  );
-});
-
-const EventsTabScreen = memo(() => {
-  const { data, eventsFilter, setEventsFilter, theme, t } = useCityTabs();
-
-  return (
-    <EventsScreen
-      events={data.events}
-      onFilterChange={setEventsFilter}
-      selectedFilter={eventsFilter}
-      theme={theme}
-      t={t}
-    />
-  );
-});
-
 const CityTabs = memo(() => {
   const { theme, t } = useCityTabs();
 
@@ -136,25 +97,18 @@ const CityTabs = memo(() => {
     >
       <Tab.Screen name="History" component={HistoryTabScreen} options={{ title: t.history }} />
       <Tab.Screen name="Places" component={PlacesTabScreen} options={{ title: t.places }} />
-      <Tab.Screen name="Accommodation" component={AccommodationTabScreen} options={{ title: t.accommodation }} />
-      <Tab.Screen name="Events" component={EventsTabScreen} options={{ title: t.events }} />
     </Tab.Navigator>
   );
 });
 
 export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, theme } = useContext(AppContext);
-  const selectedCity = route.params?.city || 'Івано-Франківськ';
+  const { isDarkMode, setIsDarkMode, language, setLanguage, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
+  const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
-  const [accommodationFilter, setAccommodationFilter] = useState('hotel');
-  const [eventsFilter, setEventsFilter] = useState('concert');
-  const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { data, categories, isLoading, error } = useCityData(selectedCity, language);
   const t = useMemo(() => ({
     history: language === 'uk' ? 'Історія' : 'History',
     places: language === 'uk' ? 'Місця' : 'Places',
-    accommodation: language === 'uk' ? 'Ночівля' : 'Stay',
-    events: language === 'uk' ? 'Події' : 'Events',
     favoritesButton: language === 'uk' ? 'Обрані місця' : 'Saved places',
     weather: language === 'uk' ? 'Погода' : 'Weather',
     currentWeather: language === 'uk' ? 'Поточна погода' : 'Current weather',
@@ -187,25 +141,19 @@ export default function MainPage({ navigation, route }) {
   );
 
   const cityTabsValue = useMemo(() => ({
-    accommodationFilter,
     categories,
     data,
-    eventsFilter,
     likedPlaces,
     openPlaceDetails,
     placesFilter,
     selectedCity,
-    setAccommodationFilter,
-    setEventsFilter,
     setPlacesFilter,
     theme,
     t,
     toggleLike,
   }), [
-    accommodationFilter,
     categories,
     data,
-    eventsFilter,
     likedPlaces,
     openPlaceDetails,
     placesFilter,
@@ -232,11 +180,11 @@ export default function MainPage({ navigation, route }) {
         </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>
+          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
             <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsDonateVisible(true)}>
-            <Icon name="gift" size={24} color={theme.bannerText} style={{ marginRight: 12 }} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconButton}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
@@ -261,12 +209,6 @@ export default function MainPage({ navigation, route }) {
         <CityTabs />
       </CityTabsContext.Provider>
 
-      <Donate
-        isVisible={isDonateVisible}
-        onClose={() => setIsDonateVisible(false)}
-        theme={theme}
-        language={language}
-      />
     </SafeAreaView>
   );
 }
@@ -277,6 +219,8 @@ const styles = StyleSheet.create({
   iconButton: { padding: 6, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', letterSpacing: 0.4, marginLeft: 4 },
   controls: { flexDirection: 'row', alignItems: 'center' },
+  changeCityButton: { paddingVertical: 6, paddingHorizontal: 8 },
+  changeCityText: { fontSize: 13, fontWeight: '700' },
   lang: { fontSize: 14, fontWeight: '700', padding: 8 },
   favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
   favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },

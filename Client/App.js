@@ -18,7 +18,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
-import Donate from './pages/Donate';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,7 +46,6 @@ const makeTheme = (isDarkMode) => ({
 function CitySelectScreen({ navigation }) {
   const { language, setLanguage, isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -59,9 +57,6 @@ function CitySelectScreen({ navigation }) {
         <View style={styles.controls}>
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')} style={styles.lang}>
             <Text style={{ color: theme.bannerText, fontWeight: '700' }}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsDonateVisible(true)} style={styles.iconBtn}>
-            <Icon name="gift" size={24} color={theme.bannerText} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconBtn}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
@@ -108,12 +103,6 @@ function CitySelectScreen({ navigation }) {
         </Text>
       ) : null}
 
-      <Donate
-        isVisible={isDonateVisible}
-        onClose={() => setIsDonateVisible(false)}
-        theme={theme}
-        language={language}
-      />
     </SafeAreaView>
   );
 }

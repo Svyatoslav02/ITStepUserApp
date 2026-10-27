@@ -85,7 +85,7 @@ const Saved = ({ navigation, route }) => {
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (isLoading || error || !data) {
+  if (isLoading || error || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -95,11 +95,10 @@ const Saved = ({ navigation, route }) => {
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
         </View>
-        {isLoading ? (
-          <LoadingState message="Завантаження обраних місць…" theme={theme} />
-        ) : (
-          <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} />
-        )}
+        {isLoading ? <LoadingState message="Завантаження місць…" theme={theme} /> : null}
+        {!isLoading && error ? <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} /> : null}
+        {!isLoading && !error && !data ? <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} /> : null}
+        {!isLoading && !error && data && placesData.length === 0 ? <EmptyState message={t.placesUnavailable} theme={theme} framed={false} /> : null}
       </SafeAreaView>
     );
   }
@@ -130,34 +129,30 @@ const Saved = ({ navigation, route }) => {
         <View style={[styles.card, { backgroundColor: theme.card }]}>
           <Text style={[styles.title, { color: theme.text }]}>{t.places}</Text>
 
-          {categories.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-              {categories.map((f) => (
-                <TouchableOpacity
-                  key={f.id}
-                  onPress={() => setPlacesFilter(f.id)}
-                  style={[
-                    styles.filter,
-                    placesFilter === f.id
-                      ? { backgroundColor: theme.accent }
-                      : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name={f.icon}
-                    size={20}
-                    color={placesFilter === f.id ? (isDarkMode ? '#000000' : '#ffffff') : theme.text}
-                  />
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          ) : (
-            <EmptyState message="Категорії недоступні." theme={theme} framed={false} />
-          )}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
+            {categories.map((f) => (
+              <TouchableOpacity
+                key={f.id}
+                onPress={() => setPlacesFilter(f.id)}
+                style={[
+                  styles.filter,
+                  placesFilter === f.id
+                    ? { backgroundColor: theme.accent }
+                    : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={f.icon}
+                  size={20}
+                  color={placesFilter === f.id ? (isDarkMode ? '#000000' : '#ffffff') : theme.text}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {filteredFavorites.length === 0 ? (
-          <EmptyState message={likedPlaces.size === 0 ? t.noFavorites : t.placesUnavailable} theme={theme} />
+          <EmptyState message={t.placesUnavailable} theme={theme} framed={false} />
         ) : (
           filteredFavorites.map((item, index) => (
             <Animated.View

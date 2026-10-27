@@ -189,7 +189,7 @@ export default function MainPage({ navigation, route }) {
         </View>
       </View>
 
-      <WeatherWidget data={data} theme={theme} t={t} selectedCity={selectedCity} />
+      <WeatherWidget coordinates={data.coordinates} theme={theme} t={t} />
 
       <View style={styles.favoritesRow}>
         <TouchableOpacity

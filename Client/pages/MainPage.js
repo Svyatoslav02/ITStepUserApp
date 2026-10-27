@@ -1,8 +1,13 @@
-import React, { useContext, useState } from 'react';
+import React, {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import {
-  Image,
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -13,42 +18,154 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
-import PlacesWidget from './Places';
-import AccommodationWidget from './AccommodationWidget';
-import EventsWidget from './Events';
+import HistoryScreen from './screens/HistoryScreen';
+import PlacesScreen from './screens/PlacesScreen';
+import AccommodationScreen from './screens/AccommodationScreen';
+import EventsScreen from './screens/EventsScreen';
 import Donate from './Donate';
 import WeatherWidget from './Weather';
 
 const Tab = createBottomTabNavigator();
+const CityTabsContext = createContext(null);
 
-function HistoryScreen({ items, theme, title }) {
-  if (!items || items.length === 0) {
-    return <Text style={[styles.empty, { color: theme.text2 }]}>{title} недоступна</Text>;
+const TAB_ICONS = {
+  History: 'clock',
+  Places: 'map',
+  Accommodation: 'moon',
+  Events: 'calendar',
+};
+
+function useCityTabs() {
+  const context = useContext(CityTabsContext);
+  if (!context) {
+    throw new Error('City tabs context is missing');
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.historyList} showsVerticalScrollIndicator={false}>
-      {items.map((item, index) => (
-        <View key={`${item.title}-${index}`} style={[styles.historyCard, { backgroundColor: theme.card }]}>
-          {item.image ? <Image source={{ uri: item.image }} style={styles.historyImage} /> : null}
-          <Text style={[styles.historyTitle, { color: theme.text }]}>{item.title}</Text>
-          {item.text.split('\n').map((paragraph, paragraphIndex) => (
-            <Text key={paragraphIndex} style={[styles.historyText, { color: theme.text2 }]}>{paragraph.trim()}</Text>
-          ))}
-        </View>
-      ))}
-    </ScrollView>
-  );
+  return context;
 }
 
-export default function MainPage({ navigation }) {
-  const { isDarkMode, setIsDarkMode, language, setLanguage, savedPlaceKeys, toggleSavedPlace, selectedCity, theme } = useContext(AppContext);
+const HistoryTabScreen = memo(() => {
+  const { data, theme, t } = useCityTabs();
+
+  return <HistoryScreen items={data.history} theme={theme} t={t} />;
+});
+
+const PlacesTabScreen = memo(() => {
+  const {
+    categories,
+    data,
+    language,
+    openPlaceDetails,
+    placesFilter,
+    savedPlaceKeys,
+    selectedCity,
+    setPlacesFilter,
+    theme,
+    t,
+    toggleSavedPlace,
+  } = useCityTabs();
+  const toggleSaved = useCallback(
+    (placeId) => toggleSavedPlace(selectedCity, placeId),
+    [selectedCity, toggleSavedPlace]
+  );
+
+  return (
+    <PlacesScreen
+      places={data.places}
+      city={selectedCity}
+      categories={categories}
+      language={language}
+      savedPlaceKeys={savedPlaceKeys}
+      onFilterChange={setPlacesFilter}
+      onPlacePress={openPlaceDetails}
+      onToggleSaved={toggleSaved}
+      selectedFilter={placesFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const AccommodationTabScreen = memo(() => {
+  const {
+    accommodationFilter,
+    data,
+    selectedCity,
+    setAccommodationFilter,
+    theme,
+    t,
+  } = useCityTabs();
+
+  return (
+    <AccommodationScreen
+      accommodation={data.accommodation}
+      city={selectedCity}
+      onFilterChange={setAccommodationFilter}
+      selectedFilter={accommodationFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const EventsTabScreen = memo(() => {
+  const { data, eventsFilter, setEventsFilter, theme, t } = useCityTabs();
+
+  return (
+    <EventsScreen
+      events={data.events}
+      onFilterChange={setEventsFilter}
+      selectedFilter={eventsFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const CityTabs = memo(() => {
+  const { theme, t } = useCityTabs();
+
+  return (
+    <Tab.Navigator
+      detachInactiveScreens={false}
+      screenOptions={({ route: tabRoute }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.text2,
+        tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.text2 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '700' },
+        unmountOnBlur: false,
+        tabBarIcon: ({ color, size }) => (
+          <Icon name={TAB_ICONS[tabRoute.name]} size={size} color={color} />
+        ),
+      })}
+    >
+      <Tab.Screen name="History" component={HistoryTabScreen} options={{ title: t.history }} />
+      <Tab.Screen name="Places" component={PlacesTabScreen} options={{ title: t.places }} />
+      <Tab.Screen name="Accommodation" component={AccommodationTabScreen} options={{ title: t.accommodation }} />
+      <Tab.Screen name="Events" component={EventsTabScreen} options={{ title: t.events }} />
+    </Tab.Navigator>
+  );
+});
+
+export default function MainPage({ navigation, route }) {
+  const {
+    isDarkMode,
+    setIsDarkMode,
+    language,
+    setLanguage,
+    savedPlaceKeys,
+    toggleSavedPlace,
+    selectedCity: storedCity,
+    theme,
+  } = useContext(AppContext);
+  const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
   const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const [eventsFilter, setEventsFilter] = useState('concert');
   const [isDonateVisible, setIsDonateVisible] = useState(false);
   const { data, categories, isLoading, error } = useCityData(selectedCity, language);
-  const t = {
+  const t = useMemo(() => ({
     history: language === 'uk' ? 'Історія' : 'History',
     places: language === 'uk' ? 'Місця' : 'Places',
     accommodation: language === 'uk' ? 'Ночівля' : 'Stay',
@@ -69,10 +186,43 @@ export default function MainPage({ navigation }) {
     rating: language === 'uk' ? 'Рейтинг' : 'Rating',
     address: language === 'uk' ? 'Адреса' : 'Address',
     description: language === 'uk' ? 'Опис' : 'Description',
-  };
+  }), [language]);
 
-  const toggleSaved = (id) => toggleSavedPlace(selectedCity, id);
-  const openPlaceDetails = (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity });
+  const openPlaceDetails = useCallback(
+    (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity }),
+    [navigation, selectedCity]
+  );
+
+  const cityTabsValue = useMemo(() => ({
+    accommodationFilter,
+    categories,
+    data,
+    eventsFilter,
+    language,
+    openPlaceDetails,
+    placesFilter,
+    savedPlaceKeys,
+    selectedCity,
+    setAccommodationFilter,
+    setEventsFilter,
+    setPlacesFilter,
+    theme,
+    t,
+    toggleSavedPlace,
+  }), [
+    accommodationFilter,
+    categories,
+    data,
+    eventsFilter,
+    language,
+    openPlaceDetails,
+    placesFilter,
+    savedPlaceKeys,
+    selectedCity,
+    theme,
+    t,
+    toggleSavedPlace,
+  ]);
 
   if (isLoading || !data) {
     return (
@@ -86,11 +236,11 @@ export default function MainPage({ navigation }) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Назад">
+          <Icon name="chevron-left" size={24} color={theme.bannerText} />
+        </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>
-          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
-            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{language === 'uk' ? 'Змінити місто' : 'Change city'}</Text>
-          </TouchableOpacity>
           <TouchableOpacity onPress={() => setLanguage(language === 'uk' ? 'en' : 'uk')}>
             <Text style={[styles.lang, { color: theme.bannerText }]}>{language === 'uk' ? 'EN' : 'UKR'}</Text>
           </TouchableOpacity>
@@ -116,63 +266,9 @@ export default function MainPage({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <Tab.Navigator
-        screenOptions={({ route: tabRoute }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: theme.accent,
-          tabBarInactiveTintColor: theme.text2,
-          tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.text2 },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: '700' },
-          tabBarIcon: ({ color, size }) => {
-            const icons = { History: 'clock', Places: 'map', Accommodation: 'moon', Events: 'calendar' };
-            return <Icon name={icons[tabRoute.name]} size={size} color={color} />;
-          },
-        })}
-      >
-        <Tab.Screen name="History" options={{ title: t.history }}>
-          {() => <HistoryScreen items={data.history} theme={theme} title={t.history} />}
-        </Tab.Screen>
-        <Tab.Screen name="Places" options={{ title: t.places }}>
-          {() => (
-            <PlacesWidget
-              data={data}
-              theme={theme}
-              t={t}
-              savedPlaceKeys={savedPlaceKeys}
-              toggleSaved={toggleSaved}
-              placesFilter={placesFilter}
-              setPlacesFilter={setPlacesFilter}
-              onPlacePress={openPlaceDetails}
-              city={selectedCity}
-              language={language}
-              categories={categories}
-            />
-          )}
-        </Tab.Screen>
-        <Tab.Screen name="Accommodation" options={{ title: t.accommodation }}>
-          {() => (
-            <AccommodationWidget
-              data={data}
-              theme={theme}
-              t={t}
-              accommodationFilter={accommodationFilter}
-              setAccommodationFilter={setAccommodationFilter}
-              city={selectedCity}
-            />
-          )}
-        </Tab.Screen>
-        <Tab.Screen name="Events" options={{ title: t.events }}>
-          {() => (
-            <EventsWidget
-              data={data}
-              theme={theme}
-              t={t}
-              eventsFilter={eventsFilter}
-              setEventsFilter={setEventsFilter}
-            />
-          )}
-        </Tab.Screen>
-      </Tab.Navigator>
+      <CityTabsContext.Provider value={cityTabsValue}>
+        <CityTabs />
+      </CityTabsContext.Provider>
 
       <Donate
         isVisible={isDonateVisible}
@@ -190,16 +286,8 @@ const styles = StyleSheet.create({
   iconButton: { padding: 6, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', letterSpacing: 0.4, marginLeft: 4 },
   controls: { flexDirection: 'row', alignItems: 'center' },
-  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
-  changeCityText: { fontSize: 12, fontWeight: '700' },
   lang: { fontSize: 14, fontWeight: '700', padding: 8 },
   favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
   favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
   favoritesText: { fontSize: 15, fontWeight: '700' },
-  empty: { padding: 24, textAlign: 'center' },
-  historyList: { paddingHorizontal: 18, paddingBottom: 24 },
-  historyCard: { padding: 20, borderRadius: 14, marginVertical: 10, elevation: 5 },
-  historyImage: { width: '100%', height: 220, borderRadius: 14, marginBottom: 14 },
-  historyTitle: { fontSize: 22, fontWeight: '800', marginBottom: 12 },
-  historyText: { fontSize: 16, fontWeight: '500', lineHeight: 24, marginBottom: 10 },
 });

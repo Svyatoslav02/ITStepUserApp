@@ -51,25 +51,30 @@ const PlacesTabScreen = memo(() => {
   const {
     categories,
     data,
-    likedPlaces,
     openPlaceDetails,
     placesFilter,
+    savedPlaceKeys,
     selectedCity,
     setPlacesFilter,
     theme,
     t,
-    toggleLike,
+    toggleSavedPlace,
   } = useCityTabs();
+  const toggleSaved = useCallback(
+    (placeId) => toggleSavedPlace(selectedCity, placeId),
+    [selectedCity, toggleSavedPlace]
+  );
 
   return (
     <PlacesScreen
       places={data.places}
       city={selectedCity}
       categories={categories}
-      likedPlaces={likedPlaces}
+      language="uk"
+      savedPlaceKeys={savedPlaceKeys}
       onFilterChange={setPlacesFilter}
       onPlacePress={openPlaceDetails}
-      onToggleLike={toggleLike}
+      onToggleSaved={toggleSaved}
       selectedFilter={placesFilter}
       theme={theme}
       t={t}
@@ -102,7 +107,14 @@ const CityTabs = memo(() => {
 });
 
 export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
+  const {
+    isDarkMode,
+    setIsDarkMode,
+    savedPlaceKeys,
+    toggleSavedPlace,
+    selectedCity: storedCity,
+    theme,
+  } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
   const { data, categories, isLoading, error } = useCityData(selectedCity, 'uk');
@@ -127,14 +139,6 @@ export default function MainPage({ navigation, route }) {
     description: 'Опис',
   }), []);
 
-  const toggleLike = useCallback((id) => {
-    setLikedPlaces((current) => {
-      const next = new Set(current);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }, [setLikedPlaces]);
-
   const openPlaceDetails = useCallback(
     (place) => navigation.navigate('PlaceDetails', { placeId: place.id, city: selectedCity }),
     [navigation, selectedCity]
@@ -143,24 +147,24 @@ export default function MainPage({ navigation, route }) {
   const cityTabsValue = useMemo(() => ({
     categories,
     data,
-    likedPlaces,
     openPlaceDetails,
     placesFilter,
+    savedPlaceKeys,
     selectedCity,
     setPlacesFilter,
     theme,
     t,
-    toggleLike,
+    toggleSavedPlace,
   }), [
     categories,
     data,
-    likedPlaces,
     openPlaceDetails,
     placesFilter,
+    savedPlaceKeys,
     selectedCity,
     theme,
     t,
-    toggleLike,
+    toggleSavedPlace,
   ]);
 
   if (isLoading || !data) {

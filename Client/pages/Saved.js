@@ -14,10 +14,12 @@ import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { getSavedPlaceKey } from '../services/useSavedPlaces';
+import PlaceDistanceButton from '../components/PlaceDistanceButton';
 
-const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, isDarkMode, selectedCity, theme } = useContext(AppContext);
-  const city = route.params?.city || selectedCity || 'Івано-Франківськ';
+const Saved = ({ navigation }) => {
+  const { savedPlaceKeys, toggleSavedPlace, isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const city = selectedCity;
   const { data, categories, isLoading, error } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
@@ -40,20 +42,12 @@ const Saved = ({ navigation, route }) => {
     changeCity: 'Змінити місто',
   };
 
-  const toggleLike = (id) => {
-    setLikedPlaces((current) => {
-      const next = new Set(current);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => likedPlaces.has(place.id) && place.type === placesFilter)
+        ? placesData.filter((place) => savedPlaceKeys.has(getSavedPlaceKey(city, place.id)) && place.type === placesFilter)
         : [],
-    [placesData, likedPlaces, placesFilter]
+    [placesData, savedPlaceKeys, city, placesFilter]
   );
 
   const animations = useMemo(
@@ -177,13 +171,20 @@ const Saved = ({ navigation, route }) => {
                   <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => toggleLike(item.id)} style={styles.like} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => toggleSavedPlace(city, item.id)} style={styles.like} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Видалити з обраного: ${item.name}`}>
                     <MaterialCommunityIcons
-                      name={likedPlaces.has(item.id) ? 'heart' : 'heart-outline'}
+                      name={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? 'heart' : 'heart-outline'}
                       size={26}
-                      color={likedPlaces.has(item.id) ? '#ef4444' : theme.inactiveHeart}
+                      color={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
+                  <PlaceDistanceButton
+                    place={item}
+                    city={city}
+                    language="uk"
+                    style={styles.distanceAction}
+                    textStyle={styles.distanceText}
+                  />
                   <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
@@ -240,9 +241,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
-  changeCityButton: { marginLeft: 'auto', paddingVertical: 6, paddingHorizontal: 8 },
-  changeCityText: { fontSize: 13, fontWeight: '700' },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
+  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
+  changeCityText: { fontSize: 11, fontWeight: '700' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {
     padding: 18,
@@ -302,6 +303,17 @@ const styles = StyleSheet.create({
     bottom: 25,
     right: 10,
     paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#1f1f1f',
+  },
+  distanceAction: {
+    position: 'absolute',
+    bottom: 25,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
     backgroundColor: '#1f1f1f',

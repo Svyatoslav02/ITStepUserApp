@@ -22,6 +22,7 @@ import AppContext from './AppContext';
 import useCities from './services/useCities';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
+import useSavedPlaces from './services/useSavedPlaces';
 
 const Stack = createStackNavigator();
 const SELECTED_CITY_KEY = 'selectedCity';
@@ -105,7 +106,7 @@ function CitySelectScreen({ navigation }) {
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [likedPlaces, setLikedPlaces] = useState(new Set());
+  const { savedPlaceKeys, toggleSavedPlace, isLoading: areSavedPlacesLoading } = useSavedPlaces();
   const [selectedCity, setSelectedCityState] = useState(null);
   const [isCityReady, setIsCityReady] = useState(false);
   useEffect(() => {
@@ -127,16 +128,16 @@ export default function App() {
   const contextValue = useMemo(() => ({
     isDarkMode,
     setIsDarkMode,
-    likedPlaces,
-    setLikedPlaces,
+    savedPlaceKeys,
+    toggleSavedPlace,
     selectedCity,
     setSelectedCity,
     theme,
-  }), [isDarkMode, likedPlaces, selectedCity, setSelectedCity, theme]);
+  }), [isDarkMode, savedPlaceKeys, selectedCity, setSelectedCity, theme, toggleSavedPlace]);
 
   return (
     <AppContext.Provider value={contextValue}>
-      {!isCityReady ? (
+      {!isCityReady || areSavedPlacesLoading ? (
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>

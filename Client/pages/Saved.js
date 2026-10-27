@@ -16,8 +16,8 @@ import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
 const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, isDarkMode, theme } = useContext(AppContext);
-  const city = route.params?.city || 'Івано-Франківськ';
+  const { likedPlaces, setLikedPlaces, isDarkMode, selectedCity, theme } = useContext(AppContext);
+  const city = route.params?.city || selectedCity || 'Івано-Франківськ';
   const { data, categories, isLoading, error } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
@@ -37,6 +37,7 @@ const Saved = ({ navigation, route }) => {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     sport: 'Спорт',
+    changeCity: 'Змінити місто',
   };
 
   const toggleLike = (id) => {
@@ -93,6 +94,9 @@ const Saved = ({ navigation, route }) => {
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.empty}>
           <Text style={[styles.emptyText, { color: theme.text2 }]}>
@@ -111,6 +115,9 @@ const Saved = ({ navigation, route }) => {
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -233,6 +240,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
+  changeCityButton: { marginLeft: 'auto', paddingVertical: 6, paddingHorizontal: 8 },
+  changeCityText: { fontSize: 13, fontWeight: '700' },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {

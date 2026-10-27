@@ -17,8 +17,8 @@ import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
 const Saved = ({ navigation, route }) => {
-  const { likedPlaces, setLikedPlaces, language, isDarkMode, theme } = useContext(AppContext);
-  const city = route.params?.city || 'Івано-Франківськ';
+  const { likedPlaces, setLikedPlaces, language, isDarkMode, selectedCity, theme } = useContext(AppContext);
+  const city = route.params?.city || selectedCity || 'Івано-Франківськ';
   const { data, categories, isLoading, error, retry } = useCityData(city, language);
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
@@ -38,6 +38,7 @@ const Saved = ({ navigation, route }) => {
     shopping: 'Шопінг',
     entertainment: 'Розваги',
     sport: 'Спорт',
+    changeCity: language === 'uk' ? 'Змінити місто' : 'Change city',
   };
 
   const toggleLike = (id) => {
@@ -94,6 +95,9 @@ const Saved = ({ navigation, route }) => {
             <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+            <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+          </TouchableOpacity>
         </View>
         {isLoading ? <LoadingState message="Завантаження місць…" theme={theme} /> : null}
         {!isLoading && error ? <ErrorState message="Не вдалося завантажити місця." onRetry={retry} theme={theme} /> : null}
@@ -111,6 +115,9 @@ const Saved = ({ navigation, route }) => {
           <MaterialCommunityIcons name="chevron-left" size={28} color={theme.bannerText} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.bannerText }]}>{t.favorites}</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
+          <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -231,6 +238,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
+  changeCityButton: { marginLeft: 'auto', paddingVertical: 6, paddingHorizontal: 8 },
+  changeCityText: { fontSize: 13, fontWeight: '700' },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {

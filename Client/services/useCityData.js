@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getCategories, getCityContent, getCityHistory, getPlaces } from './cityService';
+import { getAccommodation, getCategories, getCityContent, getCityHistory, getPlaces } from './cityService';
 
 export default function useCityData(city, language = 'uk') {
   const [result, setResult] = useState({ data: null, categories: [], isLoading: true, error: null });
@@ -11,13 +11,14 @@ export default function useCityData(city, language = 'uk') {
     Promise.all([
       getCategories(language),
       getPlaces(city, language),
+      getAccommodation(city, language),
       getCityHistory(city, language),
       getCityContent(city, language),
-    ]).then(([categories, places, history, content]) => {
+    ]).then(([categories, places, accommodation, history, content]) => {
       if (isActive) {
         setResult({
           categories,
-          data: { ...content, places, history },
+          data: { ...content, places, accommodation, history },
           isLoading: false,
           error: null,
         });

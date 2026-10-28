@@ -18,18 +18,20 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
+import AccommodationScreen from './screens/AccommodationScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import WeatherWidget from './Weather';
 
 const Tab = createBottomTabNavigator();
 const CityTabsContext = createContext(null);
 
 const TAB_ICONS = {
-  History: 'clock',
   Places: 'map',
   Accommodation: 'moon',
-  Events: 'calendar',
+  Profile: 'user',
+  History: 'clock',
 };
 
 function useCityTabs() {
@@ -66,6 +68,7 @@ const PlacesTabScreen = memo(() => {
       places={data.places}
       city={selectedCity}
       categories={categories}
+      header={<WeatherWidget coordinates={data.coordinates} theme={theme} t={t} />}
       likedPlaces={likedPlaces}
       onFilterChange={setPlacesFilter}
       onPlacePress={openPlaceDetails}
@@ -73,6 +76,50 @@ const PlacesTabScreen = memo(() => {
       selectedFilter={placesFilter}
       theme={theme}
       t={t}
+    />
+  );
+});
+
+const AccommodationTabScreen = memo(() => {
+  const {
+    accommodationFilter,
+    data,
+    likedPlaces,
+    openPlaceDetails,
+    selectedCity,
+    setAccommodationFilter,
+    theme,
+    t,
+    toggleLike,
+  } = useCityTabs();
+
+  return (
+    <AccommodationScreen
+      accommodation={data.accommodation}
+      city={selectedCity}
+      likedPlaces={likedPlaces}
+      onAccommodationPress={openPlaceDetails}
+      onFilterChange={setAccommodationFilter}
+      onToggleLike={toggleLike}
+      selectedFilter={accommodationFilter}
+      theme={theme}
+      t={t}
+    />
+  );
+});
+
+const ProfileTabScreen = memo(() => {
+  const {
+    likedPlaces,
+    openSaved,
+    theme,
+  } = useCityTabs();
+
+  return (
+    <ProfileScreen
+      likedCount={likedPlaces.size}
+      onOpenSaved={openSaved}
+      theme={theme}
     />
   );
 });
@@ -87,16 +134,21 @@ const CityTabs = memo(() => {
         headerShown: false,
         tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: theme.text2,
-        tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.text2 },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '700' },
+        tabBarShowLabel: false,
+        tabBarStyle: { backgroundColor: theme.card, borderTopWidth: 0, height: 58, paddingVertical: 0 },
+        tabBarItemStyle: { alignItems: 'center', justifyContent: 'center', padding: 0 },
+        tabBarIconStyle: { margin: 0 },
+        sceneStyle: { backgroundColor: theme.bg },
         unmountOnBlur: false,
         tabBarIcon: ({ color, size }) => (
           <Icon name={TAB_ICONS[tabRoute.name]} size={size} color={color} />
         ),
       })}
     >
-      <Tab.Screen name="History" component={HistoryTabScreen} options={{ title: t.history }} />
       <Tab.Screen name="Places" component={PlacesTabScreen} options={{ title: t.places }} />
+      <Tab.Screen name="Accommodation" component={AccommodationTabScreen} options={{ title: t.accommodation }} />
+      <Tab.Screen name="Profile" component={ProfileTabScreen} options={{ title: t.profile }} />
+      <Tab.Screen name="History" component={HistoryTabScreen} options={{ title: t.history }} />
     </Tab.Navigator>
   );
 });
@@ -105,11 +157,13 @@ export default function MainPage({ navigation, route }) {
   const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
+  const [accommodationFilter, setAccommodationFilter] = useState('hotel');
   const { data, categories, isLoading, error } = useCityData(selectedCity, 'uk');
   const t = useMemo(() => ({
     history: 'Історія',
     places: 'Місця',
-    favoritesButton: 'Обрані місця',
+    accommodation: 'Ночівля',
+    profile: 'Профіль',
     weather: 'Погода',
     currentWeather: 'Поточна погода',
     temperature: 'Температура',
@@ -140,22 +194,29 @@ export default function MainPage({ navigation, route }) {
     [navigation, selectedCity]
   );
 
+  const openSaved = useCallback(() => navigation.navigate('Saved', { city: selectedCity }), [navigation, selectedCity]);
+
   const cityTabsValue = useMemo(() => ({
+    accommodationFilter,
     categories,
     data,
     likedPlaces,
     openPlaceDetails,
+    openSaved,
     placesFilter,
     selectedCity,
+    setAccommodationFilter,
     setPlacesFilter,
     theme,
     t,
     toggleLike,
   }), [
+    accommodationFilter,
     categories,
     data,
     likedPlaces,
     openPlaceDetails,
+    openSaved,
     placesFilter,
     selectedCity,
     theme,
@@ -175,9 +236,6 @@ export default function MainPage({ navigation, route }) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <View style={[styles.header, { backgroundColor: theme.banner }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton} accessibilityLabel="Назад">
-          <Icon name="chevron-left" size={24} color={theme.bannerText} />
-        </TouchableOpacity>
         <Text numberOfLines={1} style={[styles.headerTitle, { color: theme.bannerText }]}>{selectedCity}</Text>
         <View style={styles.controls}>
           <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
@@ -189,19 +247,6 @@ export default function MainPage({ navigation, route }) {
         </View>
       </View>
 
-      <WeatherWidget coordinates={data.coordinates} theme={theme} t={t} />
-
-      <View style={styles.favoritesRow}>
-        <TouchableOpacity
-          style={[styles.favoritesButton, { backgroundColor: theme.favBtnBg }]}
-          onPress={() => navigation.navigate('Saved', { city: selectedCity })}
-          activeOpacity={0.8}
-        >
-          <Icon name="heart" size={20} color={theme.favBtnText} style={{ marginRight: 6 }} />
-          <Text style={[styles.favoritesText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
-        </TouchableOpacity>
-      </View>
-
       <CityTabsContext.Provider value={cityTabsValue}>
         <CityTabs />
       </CityTabsContext.Provider>
@@ -211,14 +256,12 @@ export default function MainPage({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, minHeight: 0 },
+  loading: { alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, borderRadius: 12, margin: 12, elevation: 5 },
   iconButton: { padding: 6, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '700', letterSpacing: 0.4, marginLeft: 4 },
   controls: { flexDirection: 'row', alignItems: 'center' },
   changeCityButton: { paddingVertical: 6, paddingHorizontal: 8 },
   changeCityText: { fontSize: 13, fontWeight: '700' },
-  favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
-  favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
-  favoritesText: { fontSize: 15, fontWeight: '700' },
 });

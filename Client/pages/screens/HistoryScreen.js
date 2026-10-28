@@ -8,39 +8,35 @@ import {
 } from 'react-native';
 
 const HistoryScreen = memo(({ items, theme, t }) => {
-  if (!items || items.length === 0) {
-    return (
-      <View style={[s.card, { backgroundColor: theme.card }]}>
-        <Text style={[s.title, { color: theme.text }]}>
-          {t.history} {t.unavailable}
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <ScrollView
+      style={[s.scroll, { backgroundColor: theme.bg }]}
       contentContainerStyle={s.section}
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
     >
-      {items.map((item, index) => (
-        <View key={`${item.title}-${index}`} style={[s.historyCard, { backgroundColor: theme.card }]}>
-          {item.image && <Image source={{ uri: item.image }} style={s.historyImage} />}
-          <Text style={[s.historyTitle, { color: theme.text }]}>{item.title}</Text>
-          {item.text.split('\n').map((para, idx) => (
-            <Text key={idx} style={[s.historyText, { color: theme.text2 }]}>
-              {para.trim()}
-            </Text>
-          ))}
+      {!items || items.length === 0 ? (
+        <View style={[s.card, { backgroundColor: theme.card }]}>
+          <Text style={[s.title, { color: theme.text }]}>{t.history} {t.unavailable}</Text>
         </View>
-      ))}
+      ) : (
+        items.map((item, index) => (
+          <View key={`${item.title}-${index}`} style={[s.historyCard, { backgroundColor: theme.card }]}>
+            {item.image ? <Image source={{ uri: item.image }} style={s.historyImage} /> : null}
+            <Text style={[s.historyTitle, { color: theme.text }]}>{item.title}</Text>
+            {item.text.split('\n').map((para, idx) => (
+              <Text key={idx} style={[s.historyText, { color: theme.text2 }]}>{para.trim()}</Text>
+            ))}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 });
 
 const s = StyleSheet.create({
-  section: { flexGrow: 1, paddingBottom: 48, paddingHorizontal: 18 },
+  scroll: { flex: 1, minHeight: 0 },
+  section: { flexGrow: 1, paddingBottom: 48 },
   card: {
     padding: 18,
     borderRadius: 12,
@@ -56,6 +52,7 @@ const s = StyleSheet.create({
   historyCard: {
     padding: 20,
     borderRadius: 14,
+    marginHorizontal: 18,
     marginVertical: 12,
     shadowColor: '#000',
     shadowOpacity: 0.12,

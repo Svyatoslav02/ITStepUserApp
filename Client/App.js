@@ -75,6 +75,7 @@ function CitySelectScreen({ navigation }) {
       </View>
 
       <FlatList
+        style={styles.list}
         data={filteredCities}
         keyExtractor={(city) => city}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
@@ -140,7 +141,10 @@ export default function App() {
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>
-          <Stack.Navigator initialRouteName={selectedCity ? 'Main' : 'CitySelect'} screenOptions={{ headerShown: false }}>
+          <Stack.Navigator
+            initialRouteName={selectedCity ? 'Main' : 'CitySelect'}
+            screenOptions={{ headerShown: false, headerMode: 'float' }}
+          >
             <Stack.Screen name="CitySelect" component={CitySelectScreen} />
             <Stack.Screen name="Main" component={MainPage} initialParams={{ city: selectedCity }} />
             <Stack.Screen name="Saved" component={Saved} />
@@ -153,7 +157,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, minHeight: 0 },
+  list: { flex: 1, minHeight: 0 },
   loading: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',

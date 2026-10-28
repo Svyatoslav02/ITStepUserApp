@@ -15,12 +15,25 @@ import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
 import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 
+const accommodationCategories = [
+  { id: 'hotel', icon: 'office-building' },
+  { id: 'motel', icon: 'caravan' },
+  { id: 'hostel', icon: 'bunk-bed' },
+];
+
 const Saved = ({ navigation, route }) => {
   const { likedPlaces, setLikedPlaces, isDarkMode, selectedCity, theme } = useContext(AppContext);
   const city = route.params?.city || selectedCity || 'Івано-Франківськ';
   const { data, categories, isLoading, error } = useCityData(city, 'uk');
-  const placesData = data?.places || [];
-  const [placesFilter, setPlacesFilter] = useState('food');
+  const placesData = useMemo(
+    () => [...(data?.places || []), ...(data?.accommodation || [])],
+    [data]
+  );
+  const savedCategories = useMemo(
+    () => [{ id: 'all', icon: 'heart' }, ...categories, ...accommodationCategories],
+    [categories]
+  );
+  const [placesFilter, setPlacesFilter] = useState('all');
   const scrollViewRef = useRef(null);
 
   const t = {
@@ -51,7 +64,7 @@ const Saved = ({ navigation, route }) => {
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => likedPlaces.has(place.id) && place.category === placesFilter)
+        ? placesData.filter((place) => likedPlaces.has(place.id) && (placesFilter === 'all' || place.category === placesFilter))
         : [],
     [placesData, likedPlaces, placesFilter]
   );
@@ -122,9 +135,11 @@ const Saved = ({ navigation, route }) => {
 
       <ScrollView
         ref={scrollViewRef}
+        style={styles.scroll}
         contentContainerStyle={styles.section}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {/* Кнопка "Переглянути карту" */}
         <View style={styles.mapButtonContainer}>
@@ -137,7 +152,7 @@ const Saved = ({ navigation, route }) => {
           <Text style={[styles.title, { color: theme.text }]}>{t.places}</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-            {categories.map((f) => (
+            {savedCategories.map((f) => (
               <TouchableOpacity
                 key={f.id}
                 onPress={() => setPlacesFilter(f.id)}
@@ -173,7 +188,7 @@ const Saved = ({ navigation, route }) => {
             >
               <View style={[styles.card, { backgroundColor: theme.card }]}>
                 <View style={styles.imageContainer}>
-                  {item.photos?.[0] ? <Image source={{ uri: item.photos[0] }} style={styles.image} /> : null}
+                  {item.photos?.[0] || item.image ? <Image source={{ uri: item.photos?.[0] || item.image }} style={styles.image} /> : null}
                   <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name || 'Місце без назви'}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
@@ -232,7 +247,8 @@ const Saved = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, minHeight: 0 },
+  scroll: { flex: 1, minHeight: 0 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

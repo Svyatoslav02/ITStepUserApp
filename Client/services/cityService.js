@@ -6,7 +6,6 @@ const categories = [
   { id: 'nature', icon: 'tree', uk: 'Природа', en: 'Nature' },
   { id: 'shopping', icon: 'shopping', uk: 'Шопінг', en: 'Shopping' },
   { id: 'entertainment', icon: 'movie-open', uk: 'Розваги', en: 'Entertainment' },
-  { id: 'hotels', icon: 'bed', uk: 'Готелі', en: 'Hotels' },
 ];
 
 const cityCoordinates = {
@@ -25,27 +24,28 @@ export async function getCategories(language = 'uk') {
 
 export async function getPlaces(city, language = 'uk') {
   const cityRecord = cityData[city];
-  const places = getLocalized(cityRecord?.places, language) ?? [];
-  const hotels = getLocalized(cityRecord?.hotels, language) ?? [];
+  return getLocalized(cityRecord?.places, language) ?? [];
+}
 
-  return [
-    ...places,
-    ...hotels.map((hotel) => ({
-      ...hotel,
-      name: hotel.name || hotel.title || 'Місце без назви',
-      category: 'hotels',
-      photos: hotel.photos || (hotel.image ? [hotel.image] : []),
-      reviewCount: hotel.reviewCount ?? hotel.reviews?.length ?? 0,
-      coordinates: hotel.coordinates ?? null,
-      contacts: hotel.contacts ?? null,
-      workingHours: hotel.workingHours ?? null,
-    })),
-  ];
+export async function getAccommodation(city, language = 'uk') {
+  const cityRecord = cityData[city];
+  const accommodation = getLocalized(cityRecord?.hotels, language) ?? [];
+
+  return accommodation.map((item) => ({
+    ...item,
+    name: item.name || item.title || 'Місце без назви',
+    category: item.category || item.type || 'hotel',
+    photos: item.photos || (item.image ? [item.image] : []),
+    reviewCount: item.reviewCount ?? item.reviews?.length ?? 0,
+  }));
 }
 
 export async function getPlace(city, placeId, language = 'uk') {
-  const places = await getPlaces(city, language);
-  return places.find((place) => String(place.id) === String(placeId)) ?? null;
+  const [places, accommodation] = await Promise.all([
+    getPlaces(city, language),
+    getAccommodation(city, language),
+  ]);
+  return [...places, ...accommodation].find((place) => String(place.id) === String(placeId)) ?? null;
 }
 
 export async function getCityHistory(city, language = 'uk') {

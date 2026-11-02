@@ -183,6 +183,14 @@ export default function MainPage({ navigation, route }) {
           <TouchableOpacity onPress={() => navigation.navigate('CitySelect')} style={styles.changeCityButton} accessibilityRole="button">
             <Text style={[styles.changeCityText, { color: theme.bannerText }]}>Змінити місто</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Contacts')}
+            style={styles.iconButton}
+            accessibilityRole="button"
+            accessibilityLabel="Контакти"
+          >
+            <Icon name="mail" size={23} color={theme.bannerText} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={styles.iconButton}>
             <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={theme.bannerText} />
           </TouchableOpacity>

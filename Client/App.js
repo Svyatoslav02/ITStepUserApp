@@ -18,6 +18,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
+import Contacts from './pages/Contacts';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -140,11 +141,15 @@ export default function App() {
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>
-          <Stack.Navigator initialRouteName={selectedCity ? 'Main' : 'CitySelect'} screenOptions={{ headerShown: false }}>
+          <Stack.Navigator
+            initialRouteName={selectedCity ? 'Main' : 'CitySelect'}
+            screenOptions={{ headerShown: false, headerMode: 'float' }}
+          >
             <Stack.Screen name="CitySelect" component={CitySelectScreen} />
             <Stack.Screen name="Main" component={MainPage} initialParams={{ city: selectedCity }} />
             <Stack.Screen name="Saved" component={Saved} />
             <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
+            <Stack.Screen name="Contacts" component={Contacts} />
           </Stack.Navigator>
         </NavigationContainer>
       )}

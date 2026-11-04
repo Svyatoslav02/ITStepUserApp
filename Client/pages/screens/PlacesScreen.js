@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../../utils/placeActions';
+import { EmptyState } from '../components/StateViews';
 
 const DEFAULT_PLACE_FILTERS = [
   { id: 'food', icon: 'silverware-fork-knife' },
@@ -142,9 +143,7 @@ const PlacesScreen = memo(({
       </View>
 
       {filtered.length === 0 ? (
-        <View style={s.empty}>
-          <Text style={[s.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-        </View>
+        <EmptyState message={t.emptyPlaces} theme={theme} framed={false} />
       ) : (
         filtered.map((place) => (
           <PlaceCard

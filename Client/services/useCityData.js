@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getCategories, getCityContent, getCityHistory, getPlaces } from './cityService';
 
 export default function useCityData(city, language = 'uk') {
   const [result, setResult] = useState({ data: null, categories: [], isLoading: true, error: null });
+  const [reloadKey, setReloadKey] = useState(0);
+  const retry = useCallback(() => setReloadKey((key) => key + 1), []);
 
   useEffect(() => {
     let isActive = true;
@@ -27,7 +29,7 @@ export default function useCityData(city, language = 'uk') {
     });
 
     return () => { isActive = false; };
-  }, [city, language]);
+  }, [city, language, reloadKey]);
 
-  return result;
+  return { ...result, retry };
 }

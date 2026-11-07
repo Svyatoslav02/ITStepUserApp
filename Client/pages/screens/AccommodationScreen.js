@@ -19,11 +19,11 @@ const ACCOMMODATION_FILTERS = [
 const AccommodationCard = memo(({ accommodation, city, theme }) => (
   <View style={[s.card, { backgroundColor: theme.card }]}>
     <View style={s.imageContainer}>
-      {accommodation.image && <Image source={{ uri: accommodation.image }} style={s.image} />}
+      {accommodation.photos?.[0] || accommodation.image ? <Image source={{ uri: accommodation.photos?.[0] || accommodation.image }} style={s.image} /> : null}
       <TouchableOpacity
         onPress={() => sharePlace(accommodation, city)}
         accessibilityRole="button"
-        accessibilityLabel={`Поділитися місцем: ${accommodation.title}`}
+        accessibilityLabel={`Поділитися місцем: ${accommodation.name || accommodation.title || 'Місце без назви'}`}
         style={s.shareLeft}
         activeOpacity={0.7}
       >
@@ -32,21 +32,32 @@ const AccommodationCard = memo(({ accommodation, city, theme }) => (
     </View>
     <View style={s.content}>
       <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-        {accommodation.title}
+        {accommodation.name || accommodation.title || 'Місце без назви'}
       </Text>
       {accommodation.description && (
         <Text style={[s.desc, { color: theme.text2 }]}>{accommodation.description}</Text>
       )}
-      <View style={s.row}>
-        <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
-        <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-          {accommodation.address}
-        </Text>
-        <View style={s.rating}>
-          <Icon name="star" size={18} color="#fbbf24" style={s.icon} />
-          <Text style={[s.detail, { color: theme.text2 }]}>{accommodation.rating.toFixed(1)}</Text>
+      {(accommodation.address || Number.isFinite(accommodation.rating) || Number.isFinite(accommodation.reviewCount)) ? (
+        <View style={s.row}>
+          {accommodation.address ? (
+            <>
+              <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
+              <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                {accommodation.address}
+              </Text>
+            </>
+          ) : null}
+          {Number.isFinite(accommodation.rating) ? (
+            <View style={s.rating}>
+              <Icon name="star" size={18} color="#fbbf24" style={s.icon} />
+              <Text style={[s.detail, { color: theme.text2 }]}>{accommodation.rating.toFixed(1)}</Text>
+            </View>
+          ) : null}
+          {Number.isFinite(accommodation.reviewCount) ? (
+            <Text style={[s.detail, { color: theme.text2 }]}>{accommodation.reviewCount} відгуків</Text>
+          ) : null}
         </View>
-      </View>
+      ) : null}
     </View>
   </View>
 ));
@@ -60,7 +71,7 @@ const AccommodationScreen = memo(({
   onFilterChange,
 }) => {
   const filtered = useMemo(
-    () => accommodation?.filter((item) => item.type === selectedFilter) || [],
+    () => accommodation?.filter((item) => (item.category || item.type) === selectedFilter) || [],
     [accommodation, selectedFilter]
   );
 

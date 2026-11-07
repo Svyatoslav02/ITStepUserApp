@@ -26,13 +26,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset",
-      [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Ваше місце потрібне лише для обчислення відстані до обраних місць."
-        }
-      ]
+      "expo-asset"
     ]
   }
 }

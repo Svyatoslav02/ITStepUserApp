@@ -13,26 +13,26 @@ import {
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import AppContext from '../AppContext';
 import useCityData from '../services/useCityData';
-import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
 import { getSavedPlaceKey } from '../services/useSavedPlaces';
-import PlaceDistanceButton from '../components/PlaceDistanceButton';
+import { openPlaceInMaps, sharePlace } from '../utils/placeActions';
+import { EmptyState, ErrorState, LoadingState } from './components/StateViews';
 
-const Saved = ({ navigation }) => {
-  const { savedPlaceKeys, toggleSavedPlace, isDarkMode, theme, selectedCity } = useContext(AppContext);
-  const city = selectedCity;
-  const { data, categories, isLoading, error } = useCityData(city, 'uk');
+const Saved = ({ navigation, route }) => {
+  const { savedPlaceKeys, toggleSavedPlace, isDarkMode, selectedCity, theme } = useContext(AppContext);
+  const city = route.params?.city || selectedCity || 'Івано-Франківськ';
+  const { data, categories, isLoading, error, retry } = useCityData(city, 'uk');
   const placesData = data?.places || [];
   const [placesFilter, setPlacesFilter] = useState('food');
   const scrollViewRef = useRef(null);
 
   const t = {
     favorites: 'Обрані місця',
-    noFavorites: 'Немає обраних місць',
+    noFavorites: 'У цій категорії немає обраних місць.',
     back: 'Назад',
     rating: 'Рейтинг',
     address: 'Адреса',
     places: 'Місця',
-    placesUnavailable: 'Місця недоступні',
+    noPlaces: 'У цьому місті поки немає місць.',
     food: 'Їжа',
     culture: 'Культура',
     nature: 'Природа',
@@ -45,7 +45,10 @@ const Saved = ({ navigation }) => {
   const filteredFavorites = useMemo(
     () =>
       placesData
-        ? placesData.filter((place) => savedPlaceKeys.has(getSavedPlaceKey(city, place.id)) && place.type === placesFilter)
+        ? placesData.filter((place) => (
+          savedPlaceKeys.has(getSavedPlaceKey(city, place.id))
+          && (place.category || place.type) === placesFilter
+        ))
         : [],
     [placesData, savedPlaceKeys, city, placesFilter]
   );
@@ -79,7 +82,7 @@ const Saved = ({ navigation }) => {
     Animated.stagger(50, animationArray).start();
   }, [animations]);
 
-  if (isLoading || !data || placesData.length === 0) {
+  if (isLoading || error || !data || placesData.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
@@ -92,11 +95,17 @@ const Saved = ({ navigation }) => {
             <Text style={[styles.changeCityText, { color: theme.bannerText }]}>{t.changeCity}</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.text2 }]}>
-            {isLoading ? 'Завантаження…' : error ? 'Не вдалося завантажити місця.' : t.placesUnavailable}
-          </Text>
-        </View>
+        {isLoading ? <LoadingState message="Завантаження обраних місць…" theme={theme} /> : null}
+        {!isLoading && (error || !data) ? (
+          <ErrorState
+            message="Не вдалося завантажити обрані місця. Перевірте інтернет-з’єднання."
+            onRetry={retry}
+            theme={theme}
+          />
+        ) : null}
+        {!isLoading && !error && data && placesData.length === 0 ? (
+          <EmptyState message={t.noPlaces} theme={theme} framed={false} />
+        ) : null}
       </SafeAreaView>
     );
   }
@@ -153,9 +162,7 @@ const Saved = ({ navigation }) => {
         </View>
 
         {filteredFavorites.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-          </View>
+          <EmptyState message={t.noFavorites} theme={theme} framed={false} />
         ) : (
           filteredFavorites.map((item, index) => (
             <Animated.View
@@ -167,25 +174,24 @@ const Saved = ({ navigation }) => {
             >
               <View style={[styles.card, { backgroundColor: theme.card }]}>
                 <View style={styles.imageContainer}>
-                  {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
-                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name}`}>
+                  {item.photos?.[0] ? <Image source={{ uri: item.photos[0] }} style={styles.image} /> : null}
+                  <TouchableOpacity onPress={() => sharePlace(item, city)} style={styles.shareLeft} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Поділитися місцем: ${item.name || 'Місце без назви'}`}>
                     <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => toggleSavedPlace(city, item.id)} style={styles.like} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Видалити з обраного: ${item.name}`}>
+                  <TouchableOpacity
+                    onPress={() => toggleSavedPlace(city, item.id)}
+                    style={styles.like}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? 'Видалити з обраного' : 'Додати до обраного'}
+                  >
                     <MaterialCommunityIcons
                       name={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? 'heart' : 'heart-outline'}
                       size={26}
                       color={savedPlaceKeys.has(getSavedPlaceKey(city, item.id)) ? '#ef4444' : theme.inactiveHeart}
                     />
                   </TouchableOpacity>
-                  <PlaceDistanceButton
-                    place={item}
-                    city={city}
-                    language="uk"
-                    style={styles.distanceAction}
-                    textStyle={styles.distanceText}
-                  />
-                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name} у Google Maps`}>
+                  <TouchableOpacity onPress={() => openPlaceInMaps(item, city)} style={styles.distanceBlock} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={`Відкрити ${item.name || 'місце'} у Google Maps`}>
                     <View style={styles.distanceContent}>
                       <Icon name="navigation" size={18} color="#fbbf24" />
                       <Text style={styles.distanceText}>Google Maps</Text>
@@ -195,26 +201,33 @@ const Saved = ({ navigation }) => {
                 <View style={styles.content}>
                   <TouchableOpacity onPress={() => navigation.navigate('PlaceDetails', { placeId: item.id, city })} activeOpacity={0.7}>
                     <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-                      {item.name}
+                      {item.name || 'Місце без назви'}
                     </Text>
                   </TouchableOpacity>
                   {item.description && (
                     <Text style={[styles.desc, { color: theme.text2 }]}>{item.description}</Text>
                   )}
-                  <View style={styles.row}>
-                    <Icon name="map-pin" size={18} color={theme.text2} style={styles.icon} />
-                    <Text
-                      style={[styles.detail, { color: theme.text2, flex: 1 }]}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {item.address}
-                    </Text>
-                    <View style={styles.rating}>
-                      <Icon name="star" size={18} color="#fbbf24" style={styles.icon} />
-                      <Text style={[styles.detail, { color: theme.text2 }]}>{item.rating.toFixed(1)}</Text>
+                  {(item.address || Number.isFinite(item.rating) || Number.isFinite(item.reviewCount)) ? (
+                    <View style={styles.row}>
+                      {item.address ? (
+                        <>
+                          <Icon name="map-pin" size={18} color={theme.text2} style={styles.icon} />
+                          <Text style={[styles.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                            {item.address}
+                          </Text>
+                        </>
+                      ) : null}
+                      {Number.isFinite(item.rating) ? (
+                        <View style={styles.rating}>
+                          <Icon name="star" size={18} color="#fbbf24" style={styles.icon} />
+                          <Text style={[styles.detail, { color: theme.text2 }]}>{item.rating.toFixed(1)}</Text>
+                        </View>
+                      ) : null}
+                      {Number.isFinite(item.reviewCount) ? (
+                        <Text style={[styles.detail, { color: theme.text2 }]}>{item.reviewCount} відгуків</Text>
+                      ) : null}
                     </View>
-                  </View>
+                  ) : null}
                 </View>
               </View>
             </Animated.View>
@@ -241,9 +254,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   headerTitle: { fontSize: 22, fontWeight: '700', letterSpacing: 0.5, marginLeft: 8 },
+  changeCityButton: { marginLeft: 'auto', paddingVertical: 6, paddingHorizontal: 8 },
+  changeCityText: { fontSize: 13, fontWeight: '700' },
   iconButton: { padding: 8, alignItems: 'center', justifyContent: 'center' },
-  changeCityButton: { paddingHorizontal: 6, paddingVertical: 8 },
-  changeCityText: { fontSize: 11, fontWeight: '700' },
   section: { flexGrow: 1, paddingBottom: 48 },
   card: {
     padding: 18,
@@ -296,24 +309,11 @@ const styles = StyleSheet.create({
   detail: { fontSize: 15, fontWeight: '500' },
   rating: { flexDirection: 'row', alignItems: 'center', marginLeft: 14 },
   icon: { marginRight: 6 },
-  empty: { padding: 28, alignItems: 'center' },
-  emptyText: { fontSize: 16, fontWeight: '600' },
   distanceBlock: {
     position: 'absolute',
     bottom: 25,
     right: 10,
     paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: '#1f1f1f',
-  },
-  distanceAction: {
-    position: 'absolute',
-    bottom: 25,
-    left: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
     backgroundColor: '#1f1f1f',

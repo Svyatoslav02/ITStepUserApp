@@ -18,11 +18,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
+import Contacts from './pages/Contacts';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
+import useSavedPlaces from './services/useSavedPlaces';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
-import useSavedPlaces from './services/useSavedPlaces';
+import { EmptyState, ErrorState, LoadingState } from './pages/components/StateViews';
 
 const Stack = createStackNavigator();
 const SELECTED_CITY_KEY = 'selectedCity';
@@ -46,8 +48,19 @@ const makeTheme = (isDarkMode) => ({
 function CitySelectScreen({ navigation }) {
   const { isDarkMode, setIsDarkMode, theme, setSelectedCity } = React.useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
-  const { cities, isLoading: isCitiesLoading, error: citiesError } = useCities();
+  const { cities, isLoading: isCitiesLoading, error: citiesError, retry: retryCities } = useCities();
   const filteredCities = cities.filter((city) => city.toLowerCase().includes(searchQuery.toLowerCase()));
+  const cityListEmpty = isCitiesLoading ? (
+    <LoadingState message="Завантаження міст…" theme={theme} />
+  ) : citiesError ? (
+    <ErrorState
+      message="Не вдалося завантажити список міст. Перевірте інтернет-з’єднання."
+      onRetry={retryCities}
+      theme={theme}
+    />
+  ) : (
+    <EmptyState message="Міст за цим пошуком не знайдено." theme={theme} />
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -80,6 +93,7 @@ function CitySelectScreen({ navigation }) {
         keyExtractor={(city) => city}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
         keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={cityListEmpty}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={async () => {
@@ -94,19 +108,17 @@ function CitySelectScreen({ navigation }) {
           </TouchableOpacity>
         )}
       />
-      {isCitiesLoading || citiesError ? (
-        <Text style={[styles.cityText, { color: theme.text2, textAlign: 'center' }]}>
-          {isCitiesLoading ? 'Завантаження міст…' : 'Не вдалося завантажити список міст.'}
-        </Text>
-      ) : null}
-
     </SafeAreaView>
   );
 }
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const { savedPlaceKeys, toggleSavedPlace, isLoading: areSavedPlacesLoading } = useSavedPlaces();
+  const {
+    savedPlaceKeys,
+    toggleSavedPlace,
+    isLoading: areSavedPlacesLoading,
+  } = useSavedPlaces();
   const [selectedCity, setSelectedCityState] = useState(null);
   const [isCityReady, setIsCityReady] = useState(false);
   useEffect(() => {
@@ -141,11 +153,15 @@ export default function App() {
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>
-          <Stack.Navigator initialRouteName={selectedCity ? 'Main' : 'CitySelect'} screenOptions={{ headerShown: false }}>
+          <Stack.Navigator
+            initialRouteName={selectedCity ? 'Main' : 'CitySelect'}
+            screenOptions={{ headerShown: false, headerMode: 'float' }}
+          >
             <Stack.Screen name="CitySelect" component={CitySelectScreen} />
             <Stack.Screen name="Main" component={MainPage} initialParams={{ city: selectedCity }} />
             <Stack.Screen name="Saved" component={Saved} />
             <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
+            <Stack.Screen name="Contacts" component={Contacts} />
           </Stack.Navigator>
         </NavigationContainer>
       )}

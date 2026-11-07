@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../../utils/placeActions';
+import { EmptyState } from '../components/StateViews';
 import { getSavedPlaceKey } from '../../services/useSavedPlaces';
-import PlaceDistanceButton from '../../components/PlaceDistanceButton';
 
 const DEFAULT_PLACE_FILTERS = [
   { id: 'food', icon: 'silverware-fork-knife' },
@@ -20,91 +20,80 @@ const DEFAULT_PLACE_FILTERS = [
   { id: 'entertainment', icon: 'movie-open' },
 ];
 
-function getPlaceImage(place) {
-  const photo = Array.isArray(place?.photos) ? place.photos[0] : null;
-  const image = photo || place?.image;
-  if (typeof image === 'string') return { uri: image };
-  if (image && typeof image === 'object' && image.uri) return image;
-  return null;
-}
+const PlaceCard = memo(({ place, city, isSaved, onPlacePress, onToggleSaved, theme }) => (
+  <View style={[s.card, { backgroundColor: theme.card }]}>
+    <View style={s.imageContainer}>
+      {place.photos?.[0] || place.image ? <Image source={{ uri: place.photos?.[0] || place.image }} style={s.image} /> : null}
 
-const PlaceCard = memo(({ place, city, language, isSaved, onPlacePress, onToggleSaved, theme }) => {
-  const imageSource = getPlaceImage(place);
-  const rating = Number(place?.rating);
+      <TouchableOpacity
+        onPress={() => sharePlace(place, city)}
+        accessibilityRole="button"
+        accessibilityLabel={`Поділитися місцем: ${place.name || place.title || 'Місце без назви'}`}
+        style={s.shareLeft}
+        activeOpacity={0.7}
+      >
+        <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
+      </TouchableOpacity>
 
-  return (
-    <View style={[s.card, { backgroundColor: theme.card }]}>
-      <View style={s.imageContainer}>
-        {imageSource ? <Image source={imageSource} style={s.image} /> : <View style={[s.image, s.imagePlaceholder, { backgroundColor: theme.bg }]} />}
-
-        <TouchableOpacity
-          onPress={() => sharePlace(place, city)}
-          accessibilityRole="button"
-          accessibilityLabel={`Поділитися місцем: ${place.name}`}
-          style={s.shareLeft}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="share-variant" size={26} color="#fbbf24" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => onToggleSaved(place.id)}
-          style={s.likeRight}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={isSaved ? `Видалити з обраного: ${place.name}` : `Додати до обраного: ${place.name}`}
-        >
-          <MaterialCommunityIcons
-            name={isSaved ? 'heart' : 'heart-outline'}
-            size={26}
-            color={isSaved ? '#ef4444' : theme.inactiveHeart}
-          />
-        </TouchableOpacity>
-
-        <PlaceDistanceButton
-          place={place}
-          city={city}
-          language={language}
-          style={s.distanceAction}
-          textStyle={s.distanceText}
+      <TouchableOpacity
+        onPress={() => onToggleSaved(place.id)}
+        style={s.likeRight}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={isSaved ? 'Видалити з обраного' : 'Додати до обраного'}
+      >
+        <MaterialCommunityIcons
+          name="heart"
+          size={26}
+          color={isSaved ? '#ef4444' : theme.inactiveHeart}
         />
-        <TouchableOpacity
-          onPress={() => openPlaceInMaps(place, city)}
-          accessibilityRole="button"
-          accessibilityLabel={`Відкрити ${place.name} у Google Maps`}
-          style={[s.distanceBlock, { backgroundColor: '#1f1f1f' }]}
-          activeOpacity={0.7}
-        >
-          <View style={s.distanceContent}>
-            <Icon name="navigation" size={18} color="#fbbf24" />
-            <Text style={s.distanceText}>Google Maps</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
-      <View style={s.content}>
-        <TouchableOpacity onPress={() => onPlacePress?.(place)} activeOpacity={0.7}>
-          <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
-            {place.name || 'Місце без назви'}
-          </Text>
-        </TouchableOpacity>
-        {place.description ? <Text style={[s.desc, { color: theme.text2 }]}>{place.description}</Text> : null}
+      <TouchableOpacity
+        onPress={() => openPlaceInMaps(place, city)}
+        accessibilityRole="button"
+        accessibilityLabel={`Відкрити ${place.name || place.title || 'місце'} у Google Maps`}
+        style={[s.distanceBlock, { backgroundColor: '#1f1f1f' }]}
+        activeOpacity={0.7}
+      >
+        <View style={s.distanceContent}>
+          <Icon name="navigation" size={18} color="#fbbf24" />
+          <Text style={s.distanceText}>Google Maps</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+
+    <View style={s.content}>
+      <TouchableOpacity onPress={() => onPlacePress?.(place)} activeOpacity={0.7}>
+        <Text style={[s.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
+          {place.name || place.title || 'Місце без назви'}
+        </Text>
+      </TouchableOpacity>
+      {place.description && <Text style={[s.desc, { color: theme.text2 }]}>{place.description}</Text>}
+      {(place.address || Number.isFinite(place.rating) || Number.isFinite(place.reviewCount)) ? (
         <View style={s.row}>
-          <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
-          <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-            {place.address || ''}
-          </Text>
-          {Number.isFinite(rating) ? (
+          {place.address ? (
+            <>
+              <Icon name="map-pin" size={18} color={theme.text2} style={s.icon} />
+              <Text style={[s.detail, { color: theme.text2, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                {place.address}
+              </Text>
+            </>
+          ) : null}
+          {Number.isFinite(place.rating) ? (
             <View style={s.rating}>
               <Icon name="star" size={18} color="#fbbf24" style={s.icon} />
-              <Text style={[s.detail, { color: theme.text2 }]}>{rating.toFixed(1)}</Text>
+              <Text style={[s.detail, { color: theme.text2 }]}>{place.rating.toFixed(1)}</Text>
             </View>
           ) : null}
+          {Number.isFinite(place.reviewCount) ? (
+            <Text style={[s.detail, { color: theme.text2 }]}>{place.reviewCount} відгуків</Text>
+          ) : null}
         </View>
-      </View>
+      ) : null}
     </View>
-  );
-});
+  </View>
+));
 
 const PlacesScreen = memo(({
   places,
@@ -112,7 +101,6 @@ const PlacesScreen = memo(({
   categories,
   theme,
   t,
-  language,
   savedPlaceKeys,
   onToggleSaved,
   onPlacePress,
@@ -146,8 +134,6 @@ const PlacesScreen = memo(({
                   : { backgroundColor: theme.card, borderColor: theme.text2, borderWidth: 1 },
               ]}
               activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={filter.name || filter.id}
             >
               <MaterialCommunityIcons
                 name={filter.icon}
@@ -160,16 +146,13 @@ const PlacesScreen = memo(({
       </View>
 
       {filtered.length === 0 ? (
-        <View style={s.empty}>
-          <Text style={[s.emptyText, { color: theme.text2 }]}>{t.placesUnavailable}</Text>
-        </View>
+        <EmptyState message={t.emptyPlaces} theme={theme} framed={false} />
       ) : (
         filtered.map((place) => (
           <PlaceCard
             key={place.id}
             place={place}
             city={city}
-            language={language}
             isSaved={savedPlaceKeys.has(getSavedPlaceKey(city, place.id))}
             onPlacePress={onPlacePress}
             onToggleSaved={onToggleSaved}
@@ -196,7 +179,6 @@ const s = StyleSheet.create({
   },
   title: { fontSize: 20, fontWeight: '700', marginBottom: 14 },
   image: { width: '100%', height: 220, borderRadius: 14, marginBottom: 14 },
-  imagePlaceholder: { opacity: 0.5 },
   content: { paddingHorizontal: 6 },
   itemTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   desc: { fontSize: 15, fontWeight: '500', marginBottom: 6 },
@@ -205,11 +187,28 @@ const s = StyleSheet.create({
   filter: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 12, marginRight: 12 },
   imageContainer: { position: 'relative' },
   shareLeft: { position: 'absolute', top: 10, left: 10 },
-  likeRight: { position: 'absolute', top: 10, right: 8, flexDirection: 'row', alignItems: 'center' },
-  distanceBlock: { position: 'absolute', bottom: 25, right: 10, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 10 },
-  distanceAction: { position: 'absolute', bottom: 25, left: 10, flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#1f1f1f' },
+  likeRight: {
+    position: 'absolute',
+    top: 10,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  distanceBlock: {
+    position: 'absolute',
+    bottom: 25,
+    right: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+  },
   distanceContent: { flexDirection: 'row', alignItems: 'center' },
-  distanceText: { marginLeft: 6, fontSize: 14, fontWeight: '600', color: '#fbbf24' },
+  distanceText: {
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fbbf24',
+  },
   empty: { padding: 28, alignItems: 'center' },
   emptyText: { fontSize: 16, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },

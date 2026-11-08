@@ -217,9 +217,20 @@ export default function MainPage({ navigation, route }) {
           style={[styles.favoritesButton, { backgroundColor: theme.favBtnBg }]}
           onPress={() => navigation.navigate('Saved', { city: selectedCity })}
           activeOpacity={0.8}
+          accessibilityRole="button"
         >
           <Icon name="heart" size={20} color={theme.favBtnText} style={{ marginRight: 6 }} />
-          <Text style={[styles.favoritesText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
+          <Text numberOfLines={1} style={[styles.favoritesText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.favoritesButton, styles.suggestButton, { backgroundColor: theme.card, borderColor: theme.text2 }]}
+          onPress={() => navigation.navigate('SuggestPlace', { city: selectedCity })}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Запропонувати відсутнє місце"
+        >
+          <Icon name="plus-circle" size={19} color={theme.accent} style={{ marginRight: 6 }} />
+          <Text numberOfLines={1} style={[styles.favoritesText, { color: theme.text }]}>Запропонувати місце</Text>
         </TouchableOpacity>
       </View>
 
@@ -239,7 +250,8 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center' },
   changeCityButton: { paddingVertical: 6, paddingHorizontal: 8 },
   changeCityText: { fontSize: 13, fontWeight: '700' },
-  favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
-  favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
-  favoritesText: { fontSize: 15, fontWeight: '700' },
+  favoritesRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 4 },
+  favoritesButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8, marginHorizontal: 4, borderRadius: 12 },
+  suggestButton: { borderWidth: 1 },
+  favoritesText: { fontSize: 13, fontWeight: '700' },
 });

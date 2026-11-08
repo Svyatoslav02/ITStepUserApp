@@ -22,6 +22,7 @@ import { ErrorState, LoadingState } from './components/StateViews';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
 import WeatherWidget from './Weather';
+import LocationPermissionCard from './components/LocationPermissionCard';
 
 const Tab = createBottomTabNavigator();
 const CityTabsContext = createContext(null);
@@ -103,7 +104,7 @@ const CityTabs = memo(() => {
 });
 
 export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
+  const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme, userLocation } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
   const { data, categories, isLoading, error, retry } = useCityData(selectedCity, 'uk');
@@ -211,6 +212,7 @@ export default function MainPage({ navigation, route }) {
       </View>
 
       <WeatherWidget coordinates={data.coordinates} theme={theme} t={t} />
+      <LocationPermissionCard location={userLocation} theme={theme} />
 
       <View style={styles.favoritesRow}>
         <TouchableOpacity

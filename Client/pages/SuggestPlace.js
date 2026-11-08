@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -91,6 +91,14 @@ export default function SuggestPlace({ navigation, route }) {
   const [submissionMode, setSubmissionMode] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submissionLockRef = useRef(false);
+
+  useEffect(() => {
+    const routeCity = route.params?.city;
+    if (!routeCity) return;
+
+    setCity(routeCity);
+    setErrors((current) => ({ ...current, city: undefined }));
+  }, [route.params?.city]);
 
   const updateField = (field, setter) => (value) => {
     setter(value);

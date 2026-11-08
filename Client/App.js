@@ -19,6 +19,7 @@ import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
 import Contacts from './pages/Contacts';
+import SuggestPlace from './pages/SuggestPlace';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -157,6 +158,7 @@ export default function App() {
             <Stack.Screen name="Saved" component={Saved} />
             <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
             <Stack.Screen name="Contacts" component={Contacts} />
+            <Stack.Screen name="SuggestPlace" component={SuggestPlace} />
           </Stack.Navigator>
         </NavigationContainer>
       )}

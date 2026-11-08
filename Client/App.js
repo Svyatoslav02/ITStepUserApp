@@ -21,6 +21,7 @@ import PlaceDetails from './pages/PlaceDetails';
 import Contacts from './pages/Contacts';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
+import useUserLocation from './services/useUserLocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
 import { EmptyState, ErrorState, LoadingState } from './pages/components/StateViews';
@@ -114,6 +115,7 @@ function CitySelectScreen({ navigation }) {
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [likedPlaces, setLikedPlaces] = useState(new Set());
+  const userLocation = useUserLocation();
   const [selectedCity, setSelectedCityState] = useState(null);
   const [isCityReady, setIsCityReady] = useState(false);
   useEffect(() => {
@@ -137,10 +139,11 @@ export default function App() {
     setIsDarkMode,
     likedPlaces,
     setLikedPlaces,
+    userLocation,
     selectedCity,
     setSelectedCity,
     theme,
-  }), [isDarkMode, likedPlaces, selectedCity, setSelectedCity, theme]);
+  }), [isDarkMode, likedPlaces, selectedCity, setSelectedCity, theme, userLocation]);
 
   return (
     <AppContext.Provider value={contextValue}>

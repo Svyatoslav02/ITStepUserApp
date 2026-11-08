@@ -56,22 +56,25 @@ const normalizeStop = (stop) => {
 export default function useDayPlan() {
   const [stops, setStops] = useState([]);
   const [isReady, setIsReady] = useState(false);
+  const [canPersist, setCanPersist] = useState(false);
+  const [storageError, setStorageError] = useState(false);
   const stopsRef = useRef([]);
   const writeQueueRef = useRef(Promise.resolve());
 
   useEffect(() => {
     let isActive = true;
 
-    AsyncStorage.getItem(DAY_PLAN_KEY)
-      .then((storedValue) => {
+    const restoreStops = async () => {
+      try {
+        const storedValue = await AsyncStorage.getItem(DAY_PLAN_KEY);
         let parsedStops = [];
-        try {
-          const parsedValue = storedValue ? JSON.parse(storedValue) : [];
-          if (Array.isArray(parsedValue)) {
-            parsedStops = parsedValue.map(normalizeStop).filter(Boolean);
+
+        if (storedValue) {
+          const parsedValue = JSON.parse(storedValue);
+          if (!Array.isArray(parsedValue)) {
+            throw new Error('Stored day plan is not a list.');
           }
-        } catch {
-          parsedStops = [];
+          parsedStops = parsedValue.map(normalizeStop).filter(Boolean);
         }
 
         const uniqueStops = parsedStops.filter((stop, index, list) => (
@@ -84,13 +87,21 @@ export default function useDayPlan() {
         if (!isActive) return;
         stopsRef.current = uniqueStops;
         setStops(uniqueStops);
-      })
-      .catch((error) => {
-        console.error('Не вдалося завантажити план дня:', error);
-      })
-      .finally(() => {
+        setCanPersist(true);
+        setStorageError(false);
+      } catch (error) {
+        if (isActive) {
+          // Do not replace saved data with an empty list if reading storage failed.
+          setCanPersist(false);
+          setStorageError(true);
+          console.error('Не вдалося завантажити план дня:', error);
+        }
+      } finally {
         if (isActive) setIsReady(true);
-      });
+      }
+    };
+
+    restoreStops();
 
     return () => {
       isActive = false;
@@ -99,15 +110,17 @@ export default function useDayPlan() {
 
   useEffect(() => {
     stopsRef.current = stops;
-    if (!isReady) return;
+    if (!isReady || !canPersist) return;
 
     writeQueueRef.current = writeQueueRef.current
       .catch(() => undefined)
       .then(() => AsyncStorage.setItem(DAY_PLAN_KEY, JSON.stringify(stops)))
+      .then(() => setStorageError(false))
       .catch((error) => {
+        setStorageError(true);
         console.error('Не вдалося зберегти план дня:', error);
       });
-  }, [isReady, stops]);
+  }, [canPersist, isReady, stops]);
 
   const addStop = useCallback((city, place) => {
     if (!city || !place || place.id === undefined || place.id === null) return;
@@ -173,5 +186,13 @@ export default function useDayPlan() {
     setStops(nextStops);
   }, []);
 
-  return { stops, isReady, addStop, removeStop, moveStop, updateVisitMinutes };
+  return {
+    stops,
+    isReady,
+    storageError,
+    addStop,
+    removeStop,
+    moveStop,
+    updateVisitMinutes,
+  };
 }

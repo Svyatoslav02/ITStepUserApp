@@ -156,6 +156,7 @@ export default function DayPlan({ navigation }) {
     moveDayPlanStop,
     removeDayPlanStop,
     updateDayPlanVisitMinutes,
+    dayPlanStorageError,
     isDarkMode,
     theme,
     selectedCity,
@@ -181,6 +182,15 @@ export default function DayPlan({ navigation }) {
         </View>
         <Text style={[styles.stopCount, { color: theme.bannerText }]}>{dayPlan.length}</Text>
       </View>
+
+      {dayPlanStorageError ? (
+        <View style={[styles.storageWarning, { backgroundColor: theme.card }]}>
+          <Icon name="alert-circle" size={20} color="#ef4444" />
+          <Text style={[styles.storageWarningText, { color: theme.text }]}>
+            Не вдалося прочитати або зберегти план на пристрої. Зміни можуть не зберегтися після закриття застосунку.
+          </Text>
+        </View>
+      ) : null}
 
       {dayPlan.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -222,6 +232,8 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700' },
   headerSubtitle: { fontSize: 13, marginTop: 2 },
   stopCount: { fontSize: 18, fontWeight: '700', paddingHorizontal: 8 },
+  storageWarning: { flexDirection: 'row', alignItems: 'center', padding: 12, marginHorizontal: 12, marginBottom: 8, borderRadius: 10 },
+  storageWarningText: { flex: 1, fontSize: 13, lineHeight: 18, marginLeft: 8 },
   list: { paddingHorizontal: 12, paddingBottom: 32 },
   stopCard: { borderRadius: 14, padding: 14, marginBottom: 12, elevation: 3 },
   stopHeader: { flexDirection: 'row', alignItems: 'center' },

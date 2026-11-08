@@ -119,6 +119,7 @@ export default function App() {
   const {
     stops: dayPlan,
     isReady: isDayPlanReady,
+    storageError: dayPlanStorageError,
     addStop: addDayPlanStop,
     removeStop: removeDayPlanStop,
     moveStop: moveDayPlanStop,
@@ -148,6 +149,7 @@ export default function App() {
     likedPlaces,
     setLikedPlaces,
     dayPlan,
+    dayPlanStorageError,
     addDayPlanStop,
     removeDayPlanStop,
     moveDayPlanStop,
@@ -158,6 +160,7 @@ export default function App() {
   }), [
     addDayPlanStop,
     dayPlan,
+    dayPlanStorageError,
     isDarkMode,
     likedPlaces,
     moveDayPlanStop,

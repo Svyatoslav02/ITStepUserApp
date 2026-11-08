@@ -22,6 +22,7 @@ import { ErrorState, LoadingState } from './components/StateViews';
 import HistoryScreen from './screens/HistoryScreen';
 import PlacesScreen from './screens/PlacesScreen';
 import WeatherWidget from './Weather';
+import { getDayPlanStopKey } from '../services/useDayPlan';
 
 const Tab = createBottomTabNavigator();
 const CityTabsContext = createContext(null);
@@ -52,6 +53,8 @@ const PlacesTabScreen = memo(() => {
   const {
     categories,
     data,
+    dayPlanKeys,
+    addDayPlanStop,
     likedPlaces,
     openPlaceDetails,
     placesFilter,
@@ -61,13 +64,19 @@ const PlacesTabScreen = memo(() => {
     t,
     toggleLike,
   } = useCityTabs();
+  const addPlaceToDayPlan = useCallback(
+    (place) => addDayPlanStop(selectedCity, place),
+    [addDayPlanStop, selectedCity]
+  );
 
   return (
     <PlacesScreen
       places={data.places}
       city={selectedCity}
       categories={categories}
+      dayPlanKeys={dayPlanKeys}
       likedPlaces={likedPlaces}
+      onAddToDayPlan={addPlaceToDayPlan}
       onFilterChange={setPlacesFilter}
       onPlacePress={openPlaceDetails}
       onToggleLike={toggleLike}
@@ -103,10 +112,23 @@ const CityTabs = memo(() => {
 });
 
 export default function MainPage({ navigation, route }) {
-  const { isDarkMode, setIsDarkMode, likedPlaces, setLikedPlaces, selectedCity: storedCity, theme } = useContext(AppContext);
+  const {
+    isDarkMode,
+    setIsDarkMode,
+    likedPlaces,
+    setLikedPlaces,
+    dayPlan,
+    addDayPlanStop,
+    selectedCity: storedCity,
+    theme,
+  } = useContext(AppContext);
   const selectedCity = route.params?.city || storedCity || 'Івано-Франківськ';
   const [placesFilter, setPlacesFilter] = useState('food');
   const { data, categories, isLoading, error, retry } = useCityData(selectedCity, 'uk');
+  const dayPlanKeys = useMemo(
+    () => new Set(dayPlan.map((stop) => getDayPlanStopKey(stop.city, stop.placeId))),
+    [dayPlan]
+  );
   const t = useMemo(() => ({
     history: 'Історія',
     places: 'Місця',
@@ -144,6 +166,8 @@ export default function MainPage({ navigation, route }) {
   const cityTabsValue = useMemo(() => ({
     categories,
     data,
+    dayPlanKeys,
+    addDayPlanStop,
     likedPlaces,
     openPlaceDetails,
     placesFilter,
@@ -155,6 +179,8 @@ export default function MainPage({ navigation, route }) {
   }), [
     categories,
     data,
+    dayPlanKeys,
+    addDayPlanStop,
     likedPlaces,
     openPlaceDetails,
     placesFilter,
@@ -221,6 +247,16 @@ export default function MainPage({ navigation, route }) {
           <Icon name="heart" size={20} color={theme.favBtnText} style={{ marginRight: 6 }} />
           <Text style={[styles.favoritesText, { color: theme.favBtnText }]}>{t.favoritesButton}</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.favoritesButton, { backgroundColor: theme.card }]}
+          onPress={() => navigation.navigate('DayPlan')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`План дня, зупинок: ${dayPlan.length}`}
+        >
+          <Icon name="calendar" size={20} color={theme.text} style={{ marginRight: 6 }} />
+          <Text style={[styles.favoritesText, { color: theme.text }]}>План дня ({dayPlan.length})</Text>
+        </TouchableOpacity>
       </View>
 
       <CityTabsContext.Provider value={cityTabsValue}>
@@ -239,7 +275,7 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center' },
   changeCityButton: { paddingVertical: 6, paddingHorizontal: 8 },
   changeCityText: { fontSize: 13, fontWeight: '700' },
-  favoritesRow: { alignItems: 'flex-end', paddingHorizontal: 16, paddingBottom: 4 },
-  favoritesButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12 },
-  favoritesText: { fontSize: 15, fontWeight: '700' },
+  favoritesRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingBottom: 4 },
+  favoritesButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 9, paddingHorizontal: 8, marginHorizontal: 4, borderRadius: 12 },
+  favoritesText: { fontSize: 13, fontWeight: '700' },
 });

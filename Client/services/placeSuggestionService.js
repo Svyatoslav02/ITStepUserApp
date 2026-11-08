@@ -1,4 +1,5 @@
 const PLACE_SUGGESTION_API_URL = process.env.EXPO_PUBLIC_PLACE_SUGGESTION_API_URL?.trim();
+const REQUEST_TIMEOUT_MS = 15000;
 
 /**
  * Keeps the form independent of the transport. Set
@@ -21,14 +22,19 @@ export async function submitPlaceSuggestion(suggestion) {
   }
 
   let response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     response = await fetch(PLACE_SUGGESTION_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
-  } catch {
-    throw new Error('network');
+  } catch (error) {
+    throw new Error(error.name === 'AbortError' ? 'timeout' : 'network');
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!response.ok) throw new Error('request');

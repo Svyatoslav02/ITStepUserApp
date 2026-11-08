@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -90,6 +90,7 @@ export default function SuggestPlace({ navigation, route }) {
   const [status, setStatus] = useState('idle');
   const [submissionMode, setSubmissionMode] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionLockRef = useRef(false);
 
   const updateField = (field, setter) => (value) => {
     setter(value);
@@ -113,8 +114,9 @@ export default function SuggestPlace({ navigation, route }) {
 
   const handleSubmit = async () => {
     setStatus('idle');
-    if (isSubmitting || !validate()) return;
+    if (submissionLockRef.current || !validate()) return;
 
+    submissionLockRef.current = true;
     setIsSubmitting(true);
     try {
       const result = await submitPlaceSuggestion({
@@ -132,6 +134,7 @@ export default function SuggestPlace({ navigation, route }) {
     } catch {
       setStatus('error');
     } finally {
+      submissionLockRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -240,7 +243,6 @@ export default function SuggestPlace({ navigation, route }) {
               placeholder="Телефон, email або https://сайт"
               theme={theme}
               error={errors.placeContacts}
-              keyboardType="email-address"
               autoCapitalize="none"
               maxLength={160}
             />
@@ -251,7 +253,6 @@ export default function SuggestPlace({ navigation, route }) {
               placeholder="Email або телефон (необов’язково)"
               theme={theme}
               error={errors.senderContact}
-              keyboardType="email-address"
               autoCapitalize="none"
               maxLength={160}
             />

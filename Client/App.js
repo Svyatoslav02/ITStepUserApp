@@ -18,9 +18,11 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainPage from './pages/MainPage';
 import Saved from './pages/Saved';
 import PlaceDetails from './pages/PlaceDetails';
+import DayPlan from './pages/DayPlan';
 import Contacts from './pages/Contacts';
 import AppContext from './AppContext';
 import useCities from './services/useCities';
+import useDayPlan from './services/useDayPlan';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
 import { EmptyState, ErrorState, LoadingState } from './pages/components/StateViews';
@@ -114,6 +116,15 @@ function CitySelectScreen({ navigation }) {
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [likedPlaces, setLikedPlaces] = useState(new Set());
+  const {
+    stops: dayPlan,
+    isReady: isDayPlanReady,
+    storageError: dayPlanStorageError,
+    addStop: addDayPlanStop,
+    removeStop: removeDayPlanStop,
+    moveStop: moveDayPlanStop,
+    updateVisitMinutes: updateDayPlanVisitMinutes,
+  } = useDayPlan();
   const [selectedCity, setSelectedCityState] = useState(null);
   const [isCityReady, setIsCityReady] = useState(false);
   useEffect(() => {
@@ -137,14 +148,32 @@ export default function App() {
     setIsDarkMode,
     likedPlaces,
     setLikedPlaces,
+    dayPlan,
+    dayPlanStorageError,
+    addDayPlanStop,
+    removeDayPlanStop,
+    moveDayPlanStop,
+    updateDayPlanVisitMinutes,
     selectedCity,
     setSelectedCity,
     theme,
-  }), [isDarkMode, likedPlaces, selectedCity, setSelectedCity, theme]);
+  }), [
+    addDayPlanStop,
+    dayPlan,
+    dayPlanStorageError,
+    isDarkMode,
+    likedPlaces,
+    moveDayPlanStop,
+    removeDayPlanStop,
+    selectedCity,
+    setSelectedCity,
+    theme,
+    updateDayPlanVisitMinutes,
+  ]);
 
   return (
     <AppContext.Provider value={contextValue}>
-      {!isCityReady ? (
+      {!isCityReady || !isDayPlanReady ? (
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>
@@ -156,6 +185,7 @@ export default function App() {
             <Stack.Screen name="Main" component={MainPage} initialParams={{ city: selectedCity }} />
             <Stack.Screen name="Saved" component={Saved} />
             <Stack.Screen name="PlaceDetails" component={PlaceDetails} />
+            <Stack.Screen name="DayPlan" component={DayPlan} />
             <Stack.Screen name="Contacts" component={Contacts} />
           </Stack.Navigator>
         </NavigationContainer>

@@ -17,10 +17,13 @@ const getDisplayLines = (value) => {
 };
 
 export default function PlaceDetails({ navigation, route }) {
-  const { isDarkMode, theme, selectedCity } = useContext(AppContext);
+  const { isDarkMode, theme, selectedCity, dayPlan, addDayPlanStop } = useContext(AppContext);
   const { placeId } = route.params;
   const city = selectedCity || route.params.city;
   const { place, isLoading, error, retry } = usePlace(city, placeId, 'uk');
+  const isInDayPlan = dayPlan.some(
+    (stop) => stop.city === city && String(stop.placeId) === String(placeId)
+  );
 
   if (isLoading || error || !place) {
     return (
@@ -91,6 +94,18 @@ export default function PlaceDetails({ navigation, route }) {
           {getDisplayLines(place.workingHours).map((line) => (
             <Text key={`hours-${line}`} style={[styles.body, styles.optionalDetail, { color: theme.text2 }]}>{line}</Text>
           ))}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ disabled: isInDayPlan }}
+            disabled={isInDayPlan}
+            onPress={() => addDayPlanStop(city, place)}
+            style={[styles.dayPlanButton, { backgroundColor: theme.accent, opacity: isInDayPlan ? 0.65 : 1 }]}
+          >
+            <Icon name={isInDayPlan ? 'check-circle' : 'calendar'} size={19} color={theme.favBtnText} />
+            <Text style={[styles.dayPlanButtonText, { color: theme.favBtnText }]}>
+              {isInDayPlan ? 'Уже в плані дня' : 'Додати до плану дня'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -114,4 +129,6 @@ const styles = StyleSheet.create({
   optionalDetail: { marginTop: 12 },
   detailText: { flex: 1, marginLeft: 10 },
   category: { marginTop: 18, fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
+  dayPlanButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, marginTop: 20 },
+  dayPlanButtonText: { fontSize: 15, fontWeight: '700', marginLeft: 8 },
 });

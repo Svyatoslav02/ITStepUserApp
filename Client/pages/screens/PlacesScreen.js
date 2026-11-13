@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons, Feather as Icon } from '@expo/vector-icons';
 import { openPlaceInMaps, sharePlace } from '../../utils/placeActions';
 import { EmptyState } from '../components/StateViews';
+import { getDayPlanStopKey } from '../../services/useDayPlan';
 
 const DEFAULT_PLACE_FILTERS = [
   { id: 'food', icon: 'silverware-fork-knife' },
@@ -19,7 +20,7 @@ const DEFAULT_PLACE_FILTERS = [
   { id: 'entertainment', icon: 'movie-open' },
 ];
 
-const PlaceCard = memo(({ place, city, liked, onPlacePress, onToggleLike, theme }) => (
+const PlaceCard = memo(({ place, city, liked, isInDayPlan, onAddToDayPlan, onPlacePress, onToggleLike, theme }) => (
   <View style={[s.card, { backgroundColor: theme.card }]}>
     <View style={s.imageContainer}>
       {place.photos?.[0] || place.image ? <Image source={{ uri: place.photos?.[0] || place.image }} style={s.image} /> : null}
@@ -57,6 +58,22 @@ const PlaceCard = memo(({ place, city, liked, onPlacePress, onToggleLike, theme 
           <Icon name="navigation" size={18} color="#fbbf24" />
           <Text style={s.distanceText}>Google Maps</Text>
         </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => onAddToDayPlan(place)}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isInDayPlan }}
+        accessibilityLabel={isInDayPlan ? 'У плані дня' : `Додати ${place.name || 'місце'} до плану дня`}
+        disabled={isInDayPlan}
+        style={[s.planButton, { opacity: isInDayPlan ? 0.65 : 1 }]}
+        activeOpacity={0.8}
+      >
+        <MaterialCommunityIcons
+          name={isInDayPlan ? 'calendar-check' : 'calendar-plus'}
+          size={18}
+          color="#fbbf24"
+        />
+        <Text style={s.planButtonText}>{isInDayPlan ? 'У плані' : 'До плану'}</Text>
       </TouchableOpacity>
     </View>
 
@@ -99,6 +116,8 @@ const PlacesScreen = memo(({
   theme,
   t,
   likedPlaces,
+  dayPlanKeys,
+  onAddToDayPlan,
   onToggleLike,
   onPlacePress,
   selectedFilter,
@@ -151,6 +170,8 @@ const PlacesScreen = memo(({
             place={place}
             city={city}
             liked={likedPlaces.has(place.id)}
+            isInDayPlan={dayPlanKeys.has(getDayPlanStopKey(city, place.id))}
+            onAddToDayPlan={onAddToDayPlan}
             onPlacePress={onPlacePress}
             onToggleLike={onToggleLike}
             theme={theme}
@@ -199,6 +220,18 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
   },
+  planButton: {
+    position: 'absolute',
+    bottom: 25,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#1f1f1f',
+  },
+  planButtonText: { color: '#fbbf24', fontSize: 13, fontWeight: '700', marginLeft: 6 },
   distanceContent: { flexDirection: 'row', alignItems: 'center' },
   distanceText: {
     marginLeft: 6,

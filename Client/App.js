@@ -1,5 +1,11 @@
 import 'react-native-gesture-handler';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -26,6 +32,10 @@ import useDayPlan from './services/useDayPlan';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getCities } from './services/cityService';
 import { EmptyState, ErrorState, LoadingState } from './pages/components/StateViews';
+import {
+  loadSavedPlaceIds,
+  saveSavedPlaceIds,
+} from './services/savedPlacesStorage';
 
 const Stack = createStackNavigator();
 const SELECTED_CITY_KEY = 'selectedCity';
@@ -116,6 +126,9 @@ function CitySelectScreen({ navigation }) {
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [likedPlaces, setLikedPlaces] = useState(new Set());
+  const [isSavedPlacesReady, setIsSavedPlacesReady] = useState(false);
+  const [canPersistSavedPlaces, setCanPersistSavedPlaces] = useState(false);
+  const savedPlacesWriteQueue = useRef(Promise.resolve());
   const {
     stops: dayPlan,
     isReady: isDayPlanReady,
@@ -138,6 +151,44 @@ export default function App() {
       .catch(() => { if (isActive) setIsCityReady(true); });
     return () => { isActive = false; };
   }, []);
+  useEffect(() => {
+    let isActive = true;
+
+    const restoreSavedPlaces = async () => {
+      try {
+        const savedIds = await loadSavedPlaceIds();
+
+        if (!isActive) return;
+
+        setLikedPlaces(new Set(savedIds));
+        setCanPersistSavedPlaces(true);
+      } catch (error) {
+        console.error('Невдалося завантажити збережені місця:', error);
+      } finally {
+        if (isActive) {
+          setIsSavedPlacesReady(true);
+        }
+      }
+    };
+
+    restoreSavedPlaces();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (!canPersistSavedPlaces) return;
+
+    const savedIds = [...likedPlaces];
+
+    savedPlacesWriteQueue.current = savedPlacesWriteQueue.current
+      .catch(() => undefined)
+      .then(() => saveSavedPlaceIds(savedIds))
+      .catch((error) => {
+        console.error('Невдалося зберегти збережені місця:', error);
+      });
+  }, [likedPlaces, canPersistSavedPlaces]);
   const setSelectedCity = useCallback(async (city) => {
     await AsyncStorage.setItem(SELECTED_CITY_KEY, city);
     setSelectedCityState(city);
@@ -173,6 +224,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={contextValue}>
+      {!isCityReady || !isSavedPlacesReady ? (
       {!isCityReady || !isDayPlanReady ? (
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (

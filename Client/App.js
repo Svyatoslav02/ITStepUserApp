@@ -224,8 +224,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={contextValue}>
-      {!isCityReady || !isSavedPlacesReady ? (
-      {!isCityReady || !isDayPlanReady ? (
+      {!isCityReady || !isSavedPlacesReady || !isDayPlanReady ? (
         <View style={[styles.container, styles.loading, { backgroundColor: theme.bg }]}><ActivityIndicator color={theme.accent} /></View>
       ) : (
         <NavigationContainer>

@@ -16,6 +16,9 @@ web-build/
 !.env.example
 !**/.env.example
 
+# Test reports
+coverage/
+
 # Logs
 *.log
 npm-debug.log*
